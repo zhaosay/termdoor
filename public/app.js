@@ -324,8 +324,10 @@
       const THEME_STORAGE = 'webcli-theme';
       const themeButtons = document.querySelectorAll('.theme-switch button');
       function applyTheme(choice) {
-        if (choice === 'auto') document.documentElement.removeAttribute('data-theme');
-        else document.documentElement.setAttribute('data-theme', choice);
+        const mode = choice === 'auto'
+          ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+          : choice;
+        document.documentElement.setAttribute('data-mode', mode);
         themeButtons.forEach((b) => b.classList.toggle('active', b.dataset.themeChoice === choice));
       }
       themeButtons.forEach((b) => b.addEventListener('click', () => {
@@ -421,17 +423,12 @@
       });
 
       const copyLinkBtn = document.getElementById('copy-link-btn');
-      const copyLinkLabel = '复制链接';
-      const copyLinkCopiedLabel = '已复制';
       copyLinkBtn.title = location.href;
       copyLinkBtn.addEventListener('click', async () => {
         await copyText(location.href);
-        copyLinkBtn.innerHTML = copyLinkCopiedLabel;
+        if (window.ZhaoUI) ZhaoUI.message('链接已复制');
         copyLinkBtn.classList.add('copied');
-        setTimeout(() => {
-          copyLinkBtn.innerHTML = copyLinkLabel;
-          copyLinkBtn.classList.remove('copied');
-        }, 1500);
+        setTimeout(() => copyLinkBtn.classList.remove('copied'), 1500);
       });
 
       const MAX_SESSIONS = 10;

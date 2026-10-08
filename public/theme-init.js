@@ -1,4 +1,5 @@
   (function () {
     var t = localStorage.getItem('webcli-theme') || 'dark';
-    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-mode', t);
   })();

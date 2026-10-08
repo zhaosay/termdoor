@@ -1,0 +1,750 @@
+  /* Legacy names used throughout this file, mapped onto ZhaoUI tokens so the
+     light/dark switch (data-mode on <html>) restyles everything at once. */
+  :root {
+    --bg: var(--zh-bg);
+    --panel: var(--zh-bg-elevated);
+    --border: var(--zh-border);
+    --border-glow: color-mix(in srgb, var(--zh-color-primary) 35%, transparent);
+    --text: var(--zh-text);
+    --muted: var(--zh-text-secondary);
+    --input-bg: var(--zh-bg-subtle);
+    --accent: var(--zh-color-primary);
+    --accent-hover: var(--zh-color-primary-hover);
+    --on-accent: var(--zh-on-primary);
+    --accent-soft: color-mix(in srgb, var(--zh-color-primary) 14%, transparent);
+    --font-sans: var(--zh-font-sans);
+    --font-mono: var(--zh-font-mono);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    /* 100% (and 100vh) on mobile browsers is the "chrome collapsed" size, which
+       doesn't match the currently-visible area while the address bar is shown.
+       That mismatch lets the page scroll by a hair, which toggles the address
+       bar, which fires a resize event, which we react to — a feedback loop
+       that reads as the whole UI flickering up and down. 100dvh tracks the
+       actual visible viewport instead, so there's nothing to scroll into. */
+    height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    transition: background .15s ease, color .15s ease;
+    overflow: hidden;
+  }
+
+  /* ---- token gate ---- */
+  #gate, #key-gate, #device-gate {
+    display: none;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #gate::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: 50%;
+    width: 900px;
+    height: 500px;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(20, 184, 166, .16), transparent 70%);
+    pointer-events: none;
+  }
+
+  .gate-card {
+    position: relative;
+    z-index: 1;
+    width: 320px;
+    padding: 32px 28px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    box-shadow: 0 0 0 1px var(--border-glow), 0 20px 60px rgba(0, 0, 0, .5);
+    text-align: center;
+    animation: gate-in .35s ease;
+  }
+
+  @keyframes gate-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .gate-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent-hover);
+    margin-bottom: 8px;
+  }
+
+  .gate-title {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .gate-card input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border-radius: .5rem;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+  }
+  .gate-card input:focus { border-color: var(--accent); }
+
+  .gate-card button {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: .5rem;
+    border: none;
+    background: var(--accent);
+    color: var(--on-accent);
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .gate-card button:hover { background: var(--accent-hover); }
+  .gate-card .gate-actions { display: flex; gap: 8px; }
+  .gate-card .gate-actions button { flex: 1; }
+  .gate-card .gate-skip { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .gate-card .gate-skip:hover { background: rgba(255, 255, 255, .06); color: var(--text); }
+
+  /* ---- app chrome ---- */
+  #app {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  #chrome { flex-shrink: 0; gap: 10px; }
+  #chrome .zh-nav-right { margin-left: auto; }
+
+  .chrome-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    border-radius: var(--zh-radius-md);
+    padding: 4px 8px;
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chrome-title:hover { background: var(--zh-bg-subtle); }
+
+  #version-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    opacity: .7;
+  }
+
+  .chrome-title-input {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1px solid var(--accent);
+    border-radius: var(--zh-radius-md);
+    padding: 4px 8px;
+    outline: none;
+    width: 160px;
+  }
+
+  /* ---- dropdown panels shared look (connections / settings) ---- */
+  .chrome-dropdown-anchor { position: relative; }
+  .chrome-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 10;
+    min-width: 220px;
+    max-width: 320px;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    cursor: default;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(.96) translateY(-4px);
+    transform-origin: top right;
+    transition: opacity .12s ease, transform .12s ease, visibility 0s linear .12s;
+  }
+  .chrome-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1) translateY(0);
+    transition: opacity .12s ease, transform .12s ease, visibility 0s linear 0s;
+  }
+
+  #connections-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding: 3px 7px;
+    border-radius: .375rem;
+    cursor: pointer;
+  }
+  #connections-badge:hover { background: rgba(127, 127, 127, .1); color: var(--text); }
+  #connections-badge .conn-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--border-glow);
+  }
+  .conn-row {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 8px;
+    border-radius: .375rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .conn-row:hover { background: rgba(127, 127, 127, .1); }
+  .conn-row .conn-device { color: var(--text); }
+  .conn-row .conn-meta { color: var(--muted); font-size: 10px; }
+
+  #quickcmd-btn {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  #quickcmd-btn:hover { background: rgba(127, 127, 127, .1); color: var(--text); }
+
+  /* Desktop/default: widget is just an inline flex row (chips + "+"), no
+     dropdown chrome at all. The mobile media query below turns it into a
+     collapsed "命令" trigger + dropdown grid instead. */
+  #quickcmd-widget {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: var(--zh-space-2) var(--zh-space-3);
+    background: var(--zh-bg-subtle);
+    border-bottom: 1px solid var(--border);
+  }
+  #quickcmd-toggle { display: none; }
+  #quickcmd-panel { display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%; }
+  #quickcmd-divider { display: none; }
+
+  #quickcmd-bar { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+  .quickcmd-chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--zh-radius-md);
+    padding: 4px 6px 4px 10px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .quickcmd-chip:hover { background: rgba(127, 127, 127, .1); color: var(--text); }
+  .quickcmd-chip .quickcmd-chip-label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .quickcmd-chip .quickcmd-chip-del {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 1px 2px;
+    border-radius: .25rem;
+  }
+  .quickcmd-chip .quickcmd-chip-del:hover { color: var(--text); background: rgba(127, 127, 127, .2); }
+
+  /* ---- add-quick-command modal ---- */
+  #quickcmd-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .7);
+    padding: 20px;
+  }
+  #quickcmd-modal.show { display: flex; }
+  #quickcmd-modal .quickcmd-card {
+    width: min(320px, 100%);
+    max-height: 90dvh;
+    overflow: auto;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+  }
+  #quickcmd-modal h3 { margin: 0 0 14px; font-size: 15px; color: var(--text); }
+  #quickcmd-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .quickcmd-preset {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .quickcmd-preset:hover { background: rgba(127, 127, 127, .1); color: var(--text); }
+  #quickcmd-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #quickcmd-form input {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 9px;
+    border-radius: .375rem;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+  }
+  #quickcmd-form input:focus { border-color: var(--accent); }
+  #quickcmd-modal-actions { display: flex; gap: 8px; margin-top: 4px; }
+  #quickcmd-modal-actions button { flex: 1; }
+  #quickcmd-form button[type="submit"] {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px;
+    border-radius: .375rem;
+    border: none;
+    background: var(--accent);
+    color: var(--on-accent);
+    cursor: pointer;
+  }
+  #quickcmd-form button[type="submit"]:hover { background: var(--accent-hover); }
+  #quickcmd-cancel {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px;
+    border-radius: .375rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  #quickcmd-cancel:hover { background: rgba(127, 127, 127, .1); color: var(--text); }
+
+  #settings-dropdown .settings-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 2px 4px 6px;
+  }
+  .theme-switch, .action-row {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+  }
+  .theme-switch button, .action-row button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 4px;
+    border-radius: .3rem;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .theme-switch button:hover, .action-row button:hover { color: var(--text); }
+  .theme-switch button.active { background: var(--accent); color: var(--on-accent); }
+  .settings-divider { height: 1px; background: var(--border); margin: 8px 2px; }
+  #version-info {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 0 4px;
+  }
+  #service-action-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 6px 4px 0;
+    min-height: 1.4em;
+  }
+
+  /* ---- tab bar ---- */
+  #tabbar {
+    display: flex;
+    align-items: stretch;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    flex-shrink: 0;
+    padding: 0 var(--zh-space-2);
+  }
+
+  #tabs { display: flex; }
+
+  .tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 8px 10px 12px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); font-weight: 600; }
+  .tab.active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .tab-label-input {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1px solid var(--accent);
+    border-radius: .25rem;
+    padding: 1px 3px;
+    outline: none;
+    width: 100px;
+  }
+
+  .tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #71717a;
+    flex-shrink: 0;
+  }
+  .tab-dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--border-glow); }
+  .tab-dot.disconnected { background: #f59e0b; animation: dot-pulse 1.2s ease-in-out infinite; }
+
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .35; }
+  }
+
+  .tab-close {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 3px;
+    border-radius: .25rem;
+  }
+  .tab-close:hover { color: var(--text); background: rgba(255, 255, 255, .08); }
+
+  #new-tab-btn {
+    flex-shrink: 0;
+    width: 34px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #new-tab-btn:hover { color: var(--accent-hover); background: var(--accent-soft); }
+  #new-tab-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ---- terminal panes ---- */
+  #panes {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: var(--bg);
+  }
+
+  .pane {
+    position: absolute;
+    inset: 0;
+    /* viewport-fit=cover lets the page draw under the iOS home-indicator
+       gesture bar; without this, the terminal's last row renders right
+       under it and ends up half-covered/hard to tap. */
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom)) 10px;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .15s ease, visibility 0s linear .15s;
+  }
+  .pane.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .15s ease, visibility 0s linear 0s;
+  }
+
+  #empty-state {
+    display: none;
+    position: absolute;
+    inset: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    color: var(--muted);
+  }
+  #empty-state.show { display: flex; }
+  #empty-state .empty-icon {
+    font-family: var(--font-mono);
+    font-size: 30px;
+    color: var(--border);
+    margin-bottom: 2px;
+  }
+  #empty-state .empty-title {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--text);
+  }
+  #empty-state .empty-hint {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* ---- search overlay ---- */
+  #search-bar {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 5;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+  }
+  #search-bar.show { display: flex; }
+  #search-bar input {
+    width: 160px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: .375rem;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+  }
+  #search-bar input:focus { border-color: var(--accent); }
+  #search-bar button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: .25rem;
+  }
+  #search-bar button:hover { color: var(--accent-hover); background: var(--accent-soft); }
+
+  /* ---- mobile key row ---- */
+  #mobile-keys {
+    display: none;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--zh-bg-subtle);
+    border-top: 1px solid var(--border);
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  #mobile-keys button {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: .375rem;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    cursor: pointer;
+  }
+  #mobile-keys button:active { background: var(--accent-soft); border-color: var(--accent); }
+  /* Ctrl/Alt latch on until the next keypress, so two-finger chords aren't
+     needed on a touchscreen. */
+  #mobile-keys button.sticky-on {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-color: var(--accent);
+  }
+  #mobile-keys::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 700px) {
+    #mobile-keys { display: flex; }
+    #mobile-keys button { min-width: 42px; padding: 9px 12px; }
+
+    /* Quick commands move to the bottom, right above the helper keys, so the
+       two input helpers sit together within thumb reach. */
+    #quickcmd-widget {
+      order: 4;
+      border-bottom: none;
+      border-top: 1px solid var(--border);
+    }
+    .chrome-title { max-width: 34vw; }
+  }
+  #mobile-keys.force-show { display: flex; }
+  #mobile-keys.force-hide { display: none; }
+
+  /* ---- drag & drop upload ---- */
+  #drop-hint {
+    display: none;
+    position: absolute;
+    inset: 8px;
+    z-index: 20;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--accent);
+    border-radius: .75rem;
+    background: rgba(20, 184, 166, .1);
+    color: var(--accent-hover);
+    font-size: 14px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  #drop-hint.show { display: flex; }
+
+  /* ---- reload banner (server restarting) ---- */
+  #reload-banner {
+    display: none;
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    max-width: min(90vw, 420px);
+    padding: 8px 16px;
+    border-radius: .5rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    text-align: center;
+  }
+  #reload-banner.show { display: block; }
+
+  /* ---- share / QR modal ---- */
+  #qr-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .7);
+    padding: 20px;
+  }
+  #qr-modal.show { display: flex; }
+  #qr-modal .qr-card {
+    position: relative;
+    width: min(340px, 100%);
+    max-height: 90dvh;
+    overflow: auto;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+    text-align: center;
+  }
+  #qr-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    cursor: pointer;
+  }
+  #qr-copy:hover { color: var(--text); }
+  #qr-copy.copied { color: var(--text); border-color: var(--text); }
+  #qr-modal h3 { margin: 0 0 4px; font-size: 15px; color: var(--text); }
+  #qr-modal p { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+  #qr-modal svg { width: 100%; height: auto; border-radius: .5rem; background: #fff; }
+  #qr-url {
+    margin: 12px 0;
+    padding: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    word-break: break-all;
+    color: var(--muted);
+    background: var(--input-bg);
+    border-radius: .375rem;
+  }
+
+  #copy-link-btn.copied { color: var(--accent); }
+
+  /* ---- layout order: quick commands sit under the tabs on desktop and
+     move to the thumb zone (above the helper keys) on a phone ---- */
+  #chrome { order: 0; }
+  #tabbar { order: 1; }
+  #quickcmd-widget { order: 2; }
+  #panes { order: 3; }
+  #mobile-keys { order: 5; }
+  @media (max-width: 700px) {
+    #quickcmd-widget { order: 4; }
+  }
