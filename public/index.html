@@ -461,7 +461,7 @@
     min-height: 1.4em;
   }
 
-  #copy-link-btn {
+  #copy-link-btn, #qr-btn {
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -477,7 +477,7 @@
     cursor: pointer;
     transition: background .15s ease, border-color .15s ease;
   }
-  #copy-link-btn:hover { background: rgba(45, 212, 191, .12); border-color: var(--accent); }
+  #copy-link-btn:hover, #qr-btn:hover { background: rgba(45, 212, 191, .12); border-color: var(--accent); }
   #copy-link-btn.copied { color: var(--accent); border-color: var(--accent); }
 
   /* ---- tab bar ---- */
@@ -804,6 +804,7 @@
   }
   #qr-modal.show { display: flex; }
   #qr-modal .qr-card {
+    position: relative;
     width: min(340px, 100%);
     max-height: 90dvh;
     overflow: auto;
@@ -813,6 +814,20 @@
     border-radius: .75rem;
     text-align: center;
   }
+  #qr-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    cursor: pointer;
+  }
+  #qr-copy:hover { color: var(--text); }
+  #qr-copy.copied { color: var(--text); border-color: var(--text); }
   #qr-modal h3 { margin: 0 0 4px; font-size: 15px; color: var(--text); }
   #qr-modal p { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
   #qr-modal svg { width: 100%; height: auto; border-radius: .5rem; background: #fff; }
@@ -903,7 +918,7 @@
           <div id="service-action-status" class="settings-meta"></div>
         </div>
       </div>
-      <button id="qr-btn" type="button" title="扫码在手机上打开">&#9636;</button>
+      <button id="qr-btn" type="button" title="扫码在手机上打开">二维码</button>
       <button id="copy-link-btn" type="button">复制链接</button>
     </div>
     <div id="tabbar">
@@ -944,6 +959,7 @@
       <div id="reload-banner"></div>
       <div id="qr-modal">
         <div class="qr-card">
+          <button id="qr-copy" type="button">复制</button>
           <h3>扫码在手机上打开</h3>
           <p>链接含 token，请勿公开分享</p>
           <div id="qr-box"></div>

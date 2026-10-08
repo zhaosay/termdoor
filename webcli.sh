@@ -80,14 +80,9 @@ do_update() {
 
 do_link() {
   echo
-  if ! running; then
-    echo "${YELLOW}[webcli] 服务没在跑，先选 1 启动${RESET}"
-    pause
-    return
-  fi
-  sed -n '/listening on/,$p' "$LOG_FILE" 2>/dev/null | head -40
-  echo
-  echo "${DIM}手机扫上面的二维码即可连接；链接含 token，不要公开分享。${RESET}"
+  # derived from the token file, so it works whether or not the service is up
+  node lib/print-link.js
+  running || echo "${YELLOW}[webcli] 注意：服务当前没在跑，先选 1 启动${RESET}"
   pause
 }
 

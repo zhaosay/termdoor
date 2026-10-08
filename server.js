@@ -2,7 +2,7 @@ const http = require('http');
 const https = require('https');
 const os = require('os');
 const fs = require('fs');
-const { execFileSync } = require('child_process');
+const { execFileSync, execFile } = require('child_process');
 const WebSocket = require('ws');
 const {
   PORT, DATA_DIR, PID_FILE, USE_TLS, TLS_KEY_FILE, TLS_CERT_FILE,
@@ -41,6 +41,16 @@ function loadTlsOptions() {
   ], { stdio: 'ignore' });
   fs.chmodSync(TLS_KEY_FILE, 0o600);
   return { key: fs.readFileSync(TLS_KEY_FILE), cert: fs.readFileSync(TLS_CERT_FILE) };
+}
+
+// Opt-out for headless boxes (launchd/systemd/SSH sessions with no display)
+// where popping a browser would just fail or make no sense.
+function openBrowser(url) {
+  if (process.env.WEBCLI_NO_OPEN === '1') return;
+  const [cmd, args] = os.platform() === 'darwin' ? ['open', [url]]
+    : os.platform() === 'win32' ? ['cmd', ['/c', 'start', '""', url]]
+    : ['xdg-open', [url]];
+  execFile(cmd, args, () => {}); // best-effort: no display / no browser is not fatal
 }
 
 const handler = createRequestHandler();
@@ -115,6 +125,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(qr.toTerminal(primary));
   console.log('');
   console.log(`[webcli] open: ${primary}`);
+  openBrowser(primary);
   for (const list of Object.values(os.networkInterfaces())) {
     for (const net of list || []) {
       if (net.family === 'IPv4' && !net.internal) {

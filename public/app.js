@@ -332,7 +332,7 @@
         localStorage.setItem(THEME_STORAGE, b.dataset.themeChoice);
         applyTheme(b.dataset.themeChoice);
       }));
-      applyTheme(localStorage.getItem(THEME_STORAGE) || 'auto');
+      applyTheme(localStorage.getItem(THEME_STORAGE) || 'dark');
 
       const serviceActionStatus = document.getElementById('service-action-status');
       const updateBtn = document.getElementById('update-btn');
@@ -910,6 +910,7 @@
 
       // ---- share / QR ----
       const qrModal = document.getElementById('qr-modal');
+      let shareUrl = '';
       document.getElementById('qr-btn').addEventListener('click', async () => {
         qrModal.classList.add('show');
         document.getElementById('qr-box').innerHTML = '<p>生成中…</p>';
@@ -919,11 +920,20 @@
           const data = await res.json();
           document.getElementById('qr-box').innerHTML = data.qr;
           document.getElementById('qr-url').textContent = data.url;
+          shareUrl = data.url;
         } catch {
           document.getElementById('qr-box').innerHTML = '<p>获取失败</p>';
         }
       });
       document.getElementById('qr-close').addEventListener('click', () => qrModal.classList.remove('show'));
+      document.getElementById('qr-copy').addEventListener('click', async (e) => {
+        if (!shareUrl) return;
+        await copyText(shareUrl);
+        const btn = e.currentTarget;
+        btn.textContent = '已复制';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('copied'); }, 1500);
+      });
       qrModal.addEventListener('click', (e) => {
         if (e.target === qrModal) qrModal.classList.remove('show');
       });

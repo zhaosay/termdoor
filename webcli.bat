@@ -140,15 +140,10 @@ exit /b 0
 
 :do_link
 echo.
+rem derived from the token file, so it works whether or not the service is up
+node lib\print-link.js
 call restart.bat status >nul 2>&1
-if errorlevel 1 (
-  echo [webcli] 服务没在跑，先选 1 启动
-  pause
-  exit /b 0
-)
-type "%LOG_FILE%" | findstr /C:"listening on"
-echo.
-echo 手机扫二维码即可连接；链接含 token，不要公开分享。
+if errorlevel 1 echo [webcli] 注意：服务当前没在跑，先选 1 启动
 pause
 exit /b 0
 
