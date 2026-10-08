@@ -143,7 +143,7 @@ echo.
 rem derived from the token file, so it works whether or not the service is up
 node lib\print-link.js
 call restart.bat status >nul 2>&1
-if errorlevel 1 echo [webcli] 注意：服务当前没在跑，先选 1 启动
+if errorlevel 1 echo [termdoor] 注意：服务当前没在跑，先选 1 启动
 pause
 exit /b 0
 
@@ -207,10 +207,10 @@ if exist "%LOCALAPPDATA%\Microsoft\WindowsApps" set "TARGET_DIR=%LOCALAPPDATA%\M
 if defined TARGET_DIR (
   > "%TARGET_DIR%\webcli.bat" echo @echo off
   >> "%TARGET_DIR%\webcli.bat" echo call "%PROJECT_DIR%\webcli.bat" %%*
-  echo [webcli] 已安装: %TARGET_DIR%\webcli.bat
+  echo [termdoor] 已安装: %TARGET_DIR%\webcli.bat
   echo 现在任何目录敲 webcli 都能呼出面板，webcli 3 直接更新重启
 ) else (
-  echo [webcli] 找不到可写目录，手动把本项目目录加进 PATH:
+  echo [termdoor] 找不到可写目录，手动把本项目目录加进 PATH:
   echo   setx PATH "%%PATH%%;%PROJECT_DIR%"
 )
 exit /b 0

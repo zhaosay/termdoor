@@ -18,14 +18,14 @@ goto usage
 
 :on
 node -e "require('fs').writeFileSync(process.argv[1],'1')" "%FLAG_FILE%"
-echo [webcli] 会话记录已开启，无需重启服务即可生效（只影响新建立的连接，已经连着的不受影响）
-echo [webcli] 从现在起，新连接的屏幕输出会被记录到 %LOGS_DIR%\，保留 %RETENTION_DAYS% 天后自动清理
-echo [webcli] 注意：终端里 cat/查看的任何敏感内容都会原样进日志，请把这个目录当敏感文件对待
+echo [termdoor] 会话记录已开启，无需重启服务即可生效（只影响新建立的连接，已经连着的不受影响）
+echo [termdoor] 从现在起，新连接的屏幕输出会被记录到 %LOGS_DIR%\，保留 %RETENTION_DAYS% 天后自动清理
+echo [termdoor] 注意：终端里 cat/查看的任何敏感内容都会原样进日志，请把这个目录当敏感文件对待
 goto :eof
 
 :off
 node -e "require('fs').writeFileSync(process.argv[1],'0')" "%FLAG_FILE%"
-echo [webcli] 会话记录已关闭，无需重启服务即可生效
+echo [termdoor] 会话记录已关闭，无需重启服务即可生效
 goto :eof
 
 :status
@@ -34,15 +34,15 @@ if exist "%FLAG_FILE%" (
   set /p ENABLED=<"%FLAG_FILE%"
 )
 if "!ENABLED!"=="1" (
-  echo [webcli] 当前状态: 已开启（保留 %RETENTION_DAYS% 天）
+  echo [termdoor] 当前状态: 已开启（保留 %RETENTION_DAYS% 天）
 ) else (
-  echo [webcli] 当前状态: 已关闭
+  echo [termdoor] 当前状态: 已关闭
 )
 if exist "%LOGS_DIR%" (
   for /f %%C in ('dir /b "%LOGS_DIR%\*.log" 2^>nul ^| find /c /v ""') do set "COUNT=%%C"
-  echo [webcli] 当前日志: !COUNT! 个文件
+  echo [termdoor] 当前日志: !COUNT! 个文件
 ) else (
-  echo [webcli] 当前日志: 0 个文件
+  echo [termdoor] 当前日志: 0 个文件
 )
 goto :eof
 
@@ -50,7 +50,7 @@ goto :eof
 if exist "%LOGS_DIR%" (
   dir /o-d "%LOGS_DIR%"
 ) else (
-  echo [webcli] 还没有日志文件
+  echo [termdoor] 还没有日志文件
 )
 goto :eof
 

@@ -32,7 +32,7 @@ function loadTlsOptions() {
       if (net.family === 'IPv4' && !net.internal) alt.push(`IP:${net.address}`);
     }
   }
-  console.log('[webcli] generating self-signed TLS certificate...');
+  console.log('[termdoor] generating self-signed TLS certificate...');
   execFileSync('openssl', [
     'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '3650',
     '-keyout', TLS_KEY_FILE, '-out', TLS_CERT_FILE,
@@ -60,14 +60,14 @@ if (USE_TLS) {
   try {
     server = https.createServer(loadTlsOptions(), handler);
   } catch (err) {
-    console.error(`[webcli] TLS setup failed (is openssl installed?), falling back to http: ${err.message}`);
+    console.error(`[termdoor] TLS setup failed (is openssl installed?), falling back to http: ${err.message}`);
     tlsActive = false;
   }
 }
 if (!server) server = http.createServer(handler);
 
 server.on('error', (err) => {
-  console.error(`[webcli] server error: ${err.message}`);
+  console.error(`[termdoor] server error: ${err.message}`);
 });
 
 const wss = new WebSocket.Server({ noServer: true });
@@ -95,11 +95,11 @@ process.on('SIGINT', shutdown);
 // state. Log it and go through the same clean pty/pid-file teardown as a
 // normal shutdown, rather than either a silent resume or a raw crash.
 process.on('uncaughtException', (err) => {
-  console.error('[webcli] uncaught exception, shutting down:', err);
+  console.error('[termdoor] uncaught exception, shutting down:', err);
   shutdown(1);
 });
 process.on('unhandledRejection', (err) => {
-  console.error('[webcli] unhandled rejection, shutting down:', err);
+  console.error('[termdoor] unhandled rejection, shutting down:', err);
   shutdown(1);
 });
 
@@ -113,25 +113,25 @@ server.listen(PORT, '0.0.0.0', () => {
   const primary = `${proto}://${mdnsHost}:${PORT}/?token=${TOKEN}`;
 
   const commitLabel = VERSION_INFO.commit ? ` (${VERSION_INFO.commit})` : '';
-  console.log(`[webcli] version: v${VERSION_INFO.version}${commitLabel}`);
+  console.log(`[termdoor] version: v${VERSION_INFO.version}${commitLabel}`);
   const removedLogs = cleanupOldLogs();
-  if (removedLogs) console.log(`[webcli] cleaned up ${removedLogs} expired session log(s)`);
+  if (removedLogs) console.log(`[termdoor] cleaned up ${removedLogs} expired session log(s)`);
   const removedUploads = cleanupOldUploads();
-  if (removedUploads) console.log(`[webcli] cleaned up ${removedUploads} expired upload(s)`);
+  if (removedUploads) console.log(`[termdoor] cleaned up ${removedUploads} expired upload(s)`);
   setInterval(() => { cleanupOldLogs(); cleanupOldUploads(); }, 24 * 60 * 60 * 1000).unref();
 
-  console.log(`[webcli] listening on 0.0.0.0:${PORT}${tlsActive ? ' (TLS, self-signed)' : ''}`);
+  console.log(`[termdoor] listening on 0.0.0.0:${PORT}${tlsActive ? ' (TLS, self-signed)' : ''}`);
   console.log('');
   console.log(qr.toTerminal(primary));
   console.log('');
-  console.log(`[webcli] open: ${primary}`);
+  console.log(`[termdoor] open: ${primary}`);
   openBrowser(primary);
   for (const list of Object.values(os.networkInterfaces())) {
     for (const net of list || []) {
       if (net.family === 'IPv4' && !net.internal) {
-        console.log(`[webcli] fallback: ${proto}://${net.address}:${PORT}/?token=${TOKEN}`);
+        console.log(`[termdoor] fallback: ${proto}://${net.address}:${PORT}/?token=${TOKEN}`);
       }
     }
   }
-  if (tlsActive) console.log('[webcli] certificate is self-signed — browsers will warn once, that is expected');
+  if (tlsActive) console.log('[termdoor] certificate is self-signed — browsers will warn once, that is expected');
 });

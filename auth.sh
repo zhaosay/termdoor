@@ -22,21 +22,21 @@ case "${1:-}" in
     printf '%s' "$KEY" > "$KEY_FILE"
     chmod 600 "$KEY_FILE"
     printf '1' > "$FLAG_FILE"
-    echo "[webcli] 二次验证已开启，无需重启服务即可生效"
-    echo "[webcli] 新密钥: $KEY"
-    echo "[webcli] 把这把密钥单独发给需要连接的人（不要和访问链接放在一起）"
+    echo "[termdoor] 二次验证已开启，无需重启服务即可生效"
+    echo "[termdoor] 新密钥: $KEY"
+    echo "[termdoor] 把这把密钥单独发给需要连接的人（不要和访问链接放在一起）"
     ;;
   off)
     printf '0' > "$FLAG_FILE"
     rm -f "$KEY_FILE"
-    echo "[webcli] 二次验证已关闭，无需重启服务即可生效"
+    echo "[termdoor] 二次验证已关闭，无需重启服务即可生效"
     ;;
   status)
     if [[ -f "$FLAG_FILE" && "$(cat "$FLAG_FILE")" == "1" ]]; then
-      echo "[webcli] 当前状态: 已开启"
-      [[ -f "$KEY_FILE" ]] && echo "[webcli] 当前密钥: $(cat "$KEY_FILE")"
+      echo "[termdoor] 当前状态: 已开启"
+      [[ -f "$KEY_FILE" ]] && echo "[termdoor] 当前密钥: $(cat "$KEY_FILE")"
     else
-      echo "[webcli] 当前状态: 已关闭"
+      echo "[termdoor] 当前状态: 已关闭"
     fi
     ;;
   *)

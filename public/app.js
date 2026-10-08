@@ -169,7 +169,7 @@
       setInterval(refreshConnections, 15000);
 
       // Stored server-side (not localStorage) so every device that opens this
-      // machine's webcli sees the same set of quick commands, not just the
+      // machine's termdoor sees the same set of quick commands, not just the
       // browser that created them.
       const quickcmdToggle = document.getElementById('quickcmd-toggle');
       const quickcmdPanel = document.getElementById('quickcmd-panel');
@@ -272,14 +272,14 @@
         const cwd = projectRoot || '';
         if (platform === 'win32') {
           return [
-            { label: '更新webcli', command: 'start "" /B update.bat', cwd },
-            { label: '重启webcli', command: 'start "" /B restart.bat', cwd },
+            { label: '更新termdoor', command: 'start "" /B update.bat', cwd },
+            { label: '重启termdoor', command: 'start "" /B restart.bat', cwd },
             { label: '打开目录', command: 'explorer .' },
           ];
         }
         return [
-          { label: '更新webcli', command: 'nohup ./update.sh > /tmp/webcli-update.log 2>&1 & disown', cwd },
-          { label: '重启webcli', command: 'nohup ./restart.sh --bg > /tmp/webcli-restart.log 2>&1 & disown', cwd },
+          { label: '更新termdoor', command: 'nohup ./update.sh > /tmp/webcli-update.log 2>&1 & disown', cwd },
+          { label: '重启termdoor', command: 'nohup ./restart.sh --bg > /tmp/webcli-restart.log 2>&1 & disown', cwd },
           { label: '打开目录', command: platform === 'linux' ? 'xdg-open .' : 'open .' },
         ];
       }
@@ -569,7 +569,7 @@
       }
 
       // A reconnect taking this long could be the server actually restarting
-      // (e.g. a quick command like the "重启webcli" one) rather than just a
+      // (e.g. a quick command like the "重启termdoor" one) rather than just a
       // slow network — shown as a heads-up while still trying. Whether it
       // really was a restart is only confirmed later, from the 'hello'
       // message's `existed` flag (see ws.onmessage below): true reloads,
@@ -740,7 +740,7 @@
         tabEl.dataset.id = String(id);
         tabEl.innerHTML = '<span class="tab-dot"></span><span class="tab-label"></span><button class="tab-close" type="button">&times;</button>';
         const tabLabelEl = tabEl.querySelector('.tab-label');
-        tabLabelEl.textContent = `webcli-${id}`;
+        tabLabelEl.textContent = `termdoor-${id}`;
         tabLabelEl.title = '双击重命名';
         tabLabelEl.addEventListener('dblclick', (e) => {
           e.stopPropagation();
@@ -878,7 +878,7 @@
       }
 
       // Each open tab here is usually a different physical machine (a
-      // separate token/link per webcli instance), so an accidental browser
+      // separate token/link per termdoor instance), so an accidental browser
       // tab close is easy to make and — without this — easy to not notice
       // until the reconnect grace period has already run out. The confirm
       // text itself is ignored by modern browsers (they show their own

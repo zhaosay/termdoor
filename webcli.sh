@@ -65,12 +65,12 @@ do_update() {
   # the foreground — run it in a subshell that restarts in the background instead.
   if ! git pull --ff-only 2>&1; then
     echo
-    echo "${RED}[webcli] 更新失败${RESET}（本地有改动挡住了 git pull，先 git stash 或 git checkout .）"
+    echo "${RED}[termdoor] 更新失败${RESET}（本地有改动挡住了 git pull，先 git stash 或 git checkout .）"
     pause
     return
   fi
   if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -qE '^package(-lock)?\.json$'; then
-    echo "[webcli] 依赖有变化，npm install..."
+    echo "[termdoor] 依赖有变化，npm install..."
     npm install
   fi
   echo
@@ -82,7 +82,7 @@ do_link() {
   echo
   # derived from the token file, so it works whether or not the service is up
   node lib/print-link.js
-  running || echo "${YELLOW}[webcli] 注意：服务当前没在跑，先选 1 启动${RESET}"
+  running || echo "${YELLOW}[termdoor] 注意：服务当前没在跑，先选 1 启动${RESET}"
   pause
 }
 
@@ -141,13 +141,13 @@ do_install_cli() {
     mkdir -p "$HOME/.local/bin" 2>/dev/null && target="$HOME/.local/bin/webcli"
   fi
   if [ -z "${target:-}" ]; then
-    echo "${RED}[webcli] 找不到可写目录${RESET}，手动加个别名:"
+    echo "${RED}[termdoor] 找不到可写目录${RESET}，手动加个别名:"
     echo "  echo \"alias webcli='$src'\" >> ~/.zshrc && source ~/.zshrc"
     return 1
   fi
   ln -sf "$src" "$target"
   chmod +x "$src"
-  echo "${GREEN}[webcli] 已安装:${RESET} $target"
+  echo "${GREEN}[termdoor] 已安装:${RESET} $target"
   case ":$PATH:" in
     *":$(dirname "$target"):"*)
       echo "现在任何目录敲 ${BOLD}webcli${RESET} 都能呼出面板，${BOLD}webcli 3${RESET} 直接更新重启" ;;

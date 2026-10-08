@@ -14,16 +14,16 @@ goto usage
 
 :regen
 node -e "const fs=require('fs');const t=require('crypto').randomBytes(16).toString('hex');fs.writeFileSync(process.argv[1],t);" "%TOKEN_FILE%"
-echo [webcli] 新 token 已生成，重启服务使其生效（旧链接会全部失效，所有当前连接会被断开）...
+echo [termdoor] 新 token 已生成，重启服务使其生效（旧链接会全部失效，所有当前连接会被断开）...
 call restart.bat
 goto :eof
 
 :status
 if exist "%TOKEN_FILE%" (
   set /p CUR_TOKEN=<"%TOKEN_FILE%"
-  echo [webcli] 当前 token: !CUR_TOKEN!
+  echo [termdoor] 当前 token: !CUR_TOKEN!
 ) else (
-  echo [webcli] 还没有 token（先启动一次服务会自动生成）
+  echo [termdoor] 还没有 token（先启动一次服务会自动生成）
 )
 goto :eof
 

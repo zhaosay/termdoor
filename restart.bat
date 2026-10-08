@@ -23,11 +23,11 @@ goto :eof
 :status
 call :find_pid
 if defined FOUND_PID (
-  echo [webcli] running, pid %FOUND_PID%, port %PORT%
+  echo [termdoor] running, pid %FOUND_PID%, port %PORT%
   findstr /C:"open:" "%LOG_FILE%" 2>nul
   exit /b 0
 )
-echo [webcli] not running
+echo [termdoor] not running
 exit /b 1
 
 REM ---------------------------------------------------------------------
@@ -70,7 +70,7 @@ if exist "%PID_FILE%" (
     )
   )
 )
-REM Fallback used when the pid file is missing/stale but a webcli instance
+REM Fallback used when the pid file is missing/stale but a termdoor instance
 REM (started some other way) still genuinely holds the port - mirrors
 REM restart.sh's `lsof -ti "tcp:$PORT"` fallback scan.
 if not defined FOUND_PID (
@@ -86,7 +86,7 @@ exit /b 0
 :find_and_kill
 call :find_pid
 if defined FOUND_PID (
-  echo [webcli] stopping running instance ^(pid !FOUND_PID!^)...
+  echo [termdoor] stopping running instance ^(pid !FOUND_PID!^)...
   taskkill /PID !FOUND_PID! /F >nul 2>&1
   timeout /t 1 /nobreak >nul
 )
@@ -106,17 +106,17 @@ if not errorlevel 1 (
   echo.
   type "%LOG_FILE%"
   echo.
-  echo [webcli] 日志: type %LOG_FILE%
+  echo [termdoor] 日志: type %LOG_FILE%
   goto :eof
 )
 findstr /C:"EADDRINUSE" "%LOG_FILE%" >nul 2>&1
 if not errorlevel 1 (
-  echo [webcli] 端口 %PORT% 被别的程序占用（不是 webcli，所以没有动它）
+  echo [termdoor] 端口 %PORT% 被别的程序占用（不是 termdoor，所以没有动它）
   set "BLOCK_PID="
   for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:"LISTENING" ^| findstr /C:":%PORT% "') do set "BLOCK_PID=%%P"
   if defined BLOCK_PID (
     echo.
-    echo [webcli] 占用它的进程:
+    echo [termdoor] 占用它的进程:
     tasklist /FI "PID eq !BLOCK_PID!"
     echo.
     set "KILLYN="
@@ -124,16 +124,16 @@ if not errorlevel 1 (
     if /I "!KILLYN!"=="y" (
       taskkill /PID !BLOCK_PID! /F
       timeout /t 1 /nobreak >nul
-      echo [webcli] 已结束，重新启动...
+      echo [termdoor] 已结束，重新启动...
       goto bg
     )
   )
-  echo [webcli] 临时换一次: set PROJECT_PORT=3060 ^&^& restart.bat --bg
-  echo [webcli] 固定换端口: port.bat set 3060 然后 restart.bat --bg
+  echo [termdoor] 临时换一次: set PROJECT_PORT=3060 ^&^& restart.bat --bg
+  echo [termdoor] 固定换端口: port.bat set 3060 然后 restart.bat --bg
   goto :eof
 )
 if %TRIES% GEQ 240 (
-  echo [webcli] 等了很久还没就绪，看看 %LOG_FILE%
+  echo [termdoor] 等了很久还没就绪，看看 %LOG_FILE%
   goto :eof
 )
 timeout /t 1 /nobreak >nul

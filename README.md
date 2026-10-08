@@ -1,4 +1,4 @@
-# webcli
+# termdoor
 
 局域网网页终端：浏览器打开一个网页，就能看到并操作这台电脑上一个**完整、可交互**的终端（`vim`/`top`/`ssh` 等全屏程序都能正常用，跟本地开一个真终端窗口体验一致）。适合"在另一台电脑或手机上，临时操作一下这台机器"的场景。
 
@@ -20,8 +20,8 @@
 **前提**：装好 [Node.js](https://nodejs.org/)（18+）。
 
 ```bash
-git clone https://github.com/zhaosay/webcli.git
-cd webcli
+git clone https://github.com/zhaosay/termdoor.git
+cd termdoor
 ```
 
 | 操作 | macOS | Windows |
@@ -42,7 +42,7 @@ flowchart LR
 启动成功后终端会打印：
 
 ```
-[webcli] open: http://<这台电脑名>.local:3050/?token=xxxxxxxxxxxxxxxx
+[termdoor] open: http://<这台电脑名>.local:3050/?token=xxxxxxxxxxxxxxxx
 ```
 
 把这个完整链接发给同局域网内想连接的设备，浏览器直接打开即可——**对方不需要装任何东西**。也可以在页面顶部点"复制链接"按钮拿到当前地址，或者手机直接扫启动时打印的二维码。
@@ -122,7 +122,7 @@ flowchart TD
   A["./update.sh"] --> B["git pull"]
   B --> C{"package.json 变了？"}
   C -- 是 --> D["npm install"]
-  C -- 否 --> E["清理占用端口的旧 webcli 进程"]
+  C -- 否 --> E["清理占用端口的旧 termdoor 进程"]
   D --> E
   E --> F["启动新进程"]
   F --> G["打印新版本号 + 访问链接"]
@@ -209,8 +209,8 @@ WEBCLI_TLS=1 ./start.sh
 
 ## 已知问题
 
-- **端口被占用**：`start.sh`/`start.bat` 会自动清理"确认是 webcli 自己"的残留进程再启动；如果占用的是别的程序（或者是一个卡死、命令行特征对不上的旧 webcli 进程，脚本不敢确认就不会自动杀），会打印出占用者的进程信息（Windows 用 `tasklist`，macOS/Linux 用 `ps`）并问你要不要结束它、结束后自动重新启动；不结束的话会提示你换端口，全程不会误杀
+- **端口被占用**：`start.sh`/`start.bat` 会自动清理"确认是 termdoor 自己"的残留进程再启动；如果占用的是别的程序（或者是一个卡死、命令行特征对不上的旧 termdoor 进程，脚本不敢确认就不会自动杀），会打印出占用者的进程信息（Windows 用 `tasklist`，macOS/Linux 用 `ps`）并问你要不要结束它、结束后自动重新启动；不结束的话会提示你换端口，全程不会误杀
 - `node-pty` 的 prebuilt 二进制解压后偶尔丢失可执行位，`start.sh` 已用 `chmod +x` 兜底
 - 首次监听端口时 macOS 可能弹防火墙提示，点允许即可
 - **Windows 上中文乱码 / 窗口一闪而退**：`.bat` 脚本是 UTF-8 编码，如果系统控制台代码页不是 UTF-8（简体中文 Windows 默认是 GBK/936），cmd.exe 会用错误的代码页解析脚本里的中文，轻则显示乱码，重则把某个中文字节序列误判成 `(`/`)` 等特殊字符导致整个脚本语法出错、窗口直接关闭。已在所有 `.bat` 脚本开头加了 `chcp 65001`（切到 UTF-8 代码页）修复；如果拉取更新后还遇到，先确认本地 `.bat` 文件确实更新到了最新版本（`findstr chcp webcli.bat` 应该能看到这一行）
-- **Windows 11 24H2+ 启动总提示端口被占用**：`restart.bat` 靠比对进程命令行来确认"这是不是 webcli 自己上次留下的进程"，原来用 `wmic` 查命令行，但 `wmic.exe` 在较新的 Windows 11 上默认被移除了，查不到就永远判断不出是不是自己的旧进程，导致旧进程从不会被清理、端口一直显示被占用。已改用系统自带的 PowerShell（`Get-CimInstance`）代替 `wmic`
+- **Windows 11 24H2+ 启动总提示端口被占用**：`restart.bat` 靠比对进程命令行来确认"这是不是 termdoor 自己上次留下的进程"，原来用 `wmic` 查命令行，但 `wmic.exe` 在较新的 Windows 11 上默认被移除了，查不到就永远判断不出是不是自己的旧进程，导致旧进程从不会被清理、端口一直显示被占用。已改用系统自带的 PowerShell（`Get-CimInstance`）代替 `wmic`

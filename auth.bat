@@ -19,28 +19,28 @@ set "KEY="
 for /f "delims=" %%K in ('node -e "console.log(require('crypto').randomBytes(8).toString('hex'))"') do set "KEY=%%K"
 node -e "require('fs').writeFileSync(process.argv[1],process.argv[2])" "%KEY_FILE%" "%KEY%"
 node -e "require('fs').writeFileSync(process.argv[1],'1')" "%FLAG_FILE%"
-echo [webcli] 二次验证已开启，无需重启服务即可生效
-echo [webcli] 新密钥: %KEY%
-echo [webcli] 把这把密钥单独发给需要连接的人（不要和访问链接放在一起）
+echo [termdoor] 二次验证已开启，无需重启服务即可生效
+echo [termdoor] 新密钥: %KEY%
+echo [termdoor] 把这把密钥单独发给需要连接的人（不要和访问链接放在一起）
 goto :eof
 
 :off
 node -e "require('fs').writeFileSync(process.argv[1],'0')" "%FLAG_FILE%"
 del "%KEY_FILE%" >nul 2>&1
-echo [webcli] 二次验证已关闭，无需重启服务即可生效
+echo [termdoor] 二次验证已关闭，无需重启服务即可生效
 goto :eof
 
 :status
 set "ENABLED=0"
 if exist "%FLAG_FILE%" set /p ENABLED=<"%FLAG_FILE%"
 if "!ENABLED!"=="1" (
-  echo [webcli] 当前状态: 已开启
+  echo [termdoor] 当前状态: 已开启
   if exist "%KEY_FILE%" (
     set /p CURKEY=<"%KEY_FILE%"
-    echo [webcli] 当前密钥: !CURKEY!
+    echo [termdoor] 当前密钥: !CURKEY!
   )
 ) else (
-  echo [webcli] 当前状态: 已关闭
+  echo [termdoor] 当前状态: 已关闭
 )
 goto :eof
 

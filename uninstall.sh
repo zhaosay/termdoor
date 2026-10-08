@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 彻底卸载 webcli：停止服务、删掉开机自启/全局命令、删掉运行时数据、
+# 彻底卸载 termdoor：停止服务、删掉开机自启/全局命令、删掉运行时数据、
 # 最后删掉这个项目目录本身。不可撤销，需要输入 DELETE 确认。
 #
 # 退出码：0 = 已确认并删除完成；1 = 用户取消或校验失败（目录还在）。
@@ -42,7 +42,7 @@ fi
 echo "这个操作不可撤销。确认删除请输入大写 DELETE，其他任意输入取消:"
 read -r CONFIRM
 if [ "$CONFIRM" != "DELETE" ]; then
-  echo "[webcli] 已取消，什么都没有删除"
+  echo "[termdoor] 已取消，什么都没有删除"
   exit 1
 fi
 
@@ -51,19 +51,19 @@ fi
 if [ -f "$PLIST" ]; then
   launchctl unload "$PLIST" 2>/dev/null || true
   rm -f "$PLIST"
-  echo "[webcli] 已移除开机自启项"
+  echo "[termdoor] 已移除开机自启项"
 fi
 
 for l in $LINKS; do
-  rm -f "$l" && echo "[webcli] 已移除全局命令: $l"
+  rm -f "$l" && echo "[termdoor] 已移除全局命令: $l"
 done
 
 rm -rf "$DATA_DIR_DISPLAY"
-echo "[webcli] 已删除数据目录"
+echo "[termdoor] 已删除数据目录"
 
 # 删除项目目录本身，包括这个脚本自己——在 POSIX 系统上这是安全的：内核会保留
 # 已打开文件的数据块直到所有引用它的文件描述符关闭，所以正在读取/执行这个脚本
 # 的 shell 不会因为文件被 unlink 而中断，会正常执行完这几行剩余代码。
 cd "$PROJECT_DIR/.."
 rm -rf "$PROJECT_DIR"
-echo "[webcli] 已删除项目目录，webcli 卸载完成"
+echo "[termdoor] 已删除项目目录，termdoor 卸载完成"
