@@ -111,7 +111,7 @@ if not errorlevel 1 (
 )
 findstr /C:"EADDRINUSE" "%LOG_FILE%" >nul 2>&1
 if not errorlevel 1 (
-  echo [termdoor] 端口 %PORT% 被别的程序占用（不是 termdoor，所以没有动它）
+  echo [termdoor] 端口 %PORT% 被别的程序占用（不是 TermDoor，所以没有动它）
   set "BLOCK_PID="
   for /f "tokens=5" %%P in ('netstat -ano ^| findstr /R /C:"LISTENING" ^| findstr /C:":%PORT% "') do set "BLOCK_PID=%%P"
   if defined BLOCK_PID (

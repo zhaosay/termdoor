@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 彻底卸载 termdoor：停止服务、删掉开机自启/全局命令、删掉运行时数据、
+# 彻底卸载 TermDoor：停止服务、删掉开机自启/全局命令、删掉运行时数据、
 # 最后删掉这个项目目录本身。不可撤销，需要输入 DELETE 确认。
 #
 # 退出码：0 = 已确认并删除完成；1 = 用户取消或校验失败（目录还在）。
@@ -66,4 +66,4 @@ echo "[termdoor] 已删除数据目录"
 # 的 shell 不会因为文件被 unlink 而中断，会正常执行完这几行剩余代码。
 cd "$PROJECT_DIR/.."
 rm -rf "$PROJECT_DIR"
-echo "[termdoor] 已删除项目目录，termdoor 卸载完成"
+echo "[termdoor] 已删除项目目录，TermDoor 卸载完成"

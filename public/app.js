@@ -118,15 +118,6 @@
         quickcmdPanel.classList.remove('show');
       }
 
-      function formatAgo(ts) {
-        const mins = Math.floor(Math.max(0, Date.now() - ts) / 60000);
-        if (mins < 1) return '刚刚';
-        if (mins < 60) return `${mins} 分钟前`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} 小时前`;
-        return `${Math.floor(hours / 24)} 天前`;
-      }
-
       function refreshConnections() {
         fetch(`/api/connections?${authQuery}`).then((r) => r.json()).then(({ connections }) => {
           if (!Array.isArray(connections)) return;
@@ -265,24 +256,6 @@
         { label: '磁盘用量', command: 'wmic logicaldisk get Caption,FreeSpace,Size' },
         { label: '进程列表', command: 'tasklist' },
       ];
-      // These three need the project directory as cwd (update/restart) and a
-      // per-OS open-file-manager command, so they're built at render time
-      // instead of living in the static arrays above.
-      function buildManagementPresets(platform, projectRoot) {
-        const cwd = projectRoot || '';
-        if (platform === 'win32') {
-          return [
-            { label: '更新termdoor', command: 'start "" /B update.bat', cwd },
-            { label: '重启termdoor', command: 'start "" /B restart.bat', cwd },
-            { label: '打开目录', command: 'explorer .' },
-          ];
-        }
-        return [
-          { label: '更新termdoor', command: 'nohup ./update.sh > /tmp/webcli-update.log 2>&1 & disown', cwd },
-          { label: '重启termdoor', command: 'nohup ./restart.sh --bg > /tmp/webcli-restart.log 2>&1 & disown', cwd },
-          { label: '打开目录', command: platform === 'linux' ? 'xdg-open .' : 'open .' },
-        ];
-      }
       const quickcmdPresetsEl = document.getElementById('quickcmd-presets');
       function renderQuickcmdPresets(platform, projectRoot) {
         const presets = (platform === 'win32' ? QUICKCMD_PRESETS_WIN32 : QUICKCMD_PRESETS_POSIX)
@@ -566,7 +539,7 @@
       }
 
       // A reconnect taking this long could be the server actually restarting
-      // (e.g. a quick command like the "重启termdoor" one) rather than just a
+      // (e.g. a quick command like the "重启TermDoor" one) rather than just a
       // slow network — shown as a heads-up while still trying. Whether it
       // really was a restart is only confirmed later, from the 'hello'
       // message's `existed` flag (see ws.onmessage below): true reloads,
@@ -737,7 +710,7 @@
         tabEl.dataset.id = String(id);
         tabEl.innerHTML = '<span class="tab-dot"></span><span class="tab-label"></span><button class="tab-close" type="button">&times;</button>';
         const tabLabelEl = tabEl.querySelector('.tab-label');
-        tabLabelEl.textContent = `termdoor-${id}`;
+        tabLabelEl.textContent = `TermDoor-${id}`;
         tabLabelEl.title = '双击重命名';
         tabLabelEl.addEventListener('dblclick', (e) => {
           e.stopPropagation();
@@ -936,42 +909,13 @@
       });
 
       // ---- drag & drop upload ----
-      (function wireDrop() {
-        const hint = document.getElementById('drop-hint');
-        let depth = 0;
-        panesEl.addEventListener('dragenter', (e) => {
-          e.preventDefault();
-          if (++depth === 1) hint.classList.add('show');
-        });
-        panesEl.addEventListener('dragover', (e) => e.preventDefault());
-        panesEl.addEventListener('dragleave', () => {
-          if (--depth <= 0) { depth = 0; hint.classList.remove('show'); }
-        });
-        panesEl.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          depth = 0;
-          hint.classList.remove('show');
-          for (const file of [...(e.dataTransfer.files || [])]) {
-            const session = currentSession();
-            try {
-              const keyQ = secondaryKey ? `&key=${encodeURIComponent(secondaryKey)}` : '';
-              const res = await fetch(`/api/upload?token=${encodeURIComponent(token)}${keyQ}`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/octet-stream',
-                  'x-webcli-filename': encodeURIComponent(file.name),
-                },
-                body: file,
-              });
-              const data = await res.json();
-              if (!res.ok) throw new Error(data.error || 'failed');
-              if (session) session.term.write(`\r\n\x1b[36m[${t('uploaded')}] ${data.path}\x1b[0m\r\n`);
-            } catch (err) {
-              if (session) session.term.write(`\r\n\x1b[31m[${t('uploadFailed')}] ${err.message}\x1b[0m\r\n`);
-            }
-          }
-        });
-      })();
+      wireDrop({
+        panesEl,
+        hint: document.getElementById('drop-hint'),
+        authQuery,
+        currentSession,
+        t,
+      });
 
       if (location.protocol === 'https:' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
