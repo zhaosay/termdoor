@@ -6,7 +6,7 @@
 
 ## ZhaoUI 依赖
 
-界面用的是自己的组件库 ZhaoUI（`@zhaoui/ui`，当前复制的是 0.1.0）。源是 ZhaoUI 仓库的 `packages/ui/dist/`。
+界面用的是自己的组件库 ZhaoUI（`@zhaoui/ui`，当前复制的是 0.1.0）。源是 ZhaoUI 仓库（github.com/zhaosay/zhaoui）的 `packages/ui/dist/`。
 
 项目里复制了三个文件，没有做软链接：
 
