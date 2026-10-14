@@ -2,7 +2,7 @@
 
 > 浏览器里的终端之门
 
-局域网网页终端：浏览器打开一个网页，就能看到并操作这台电脑上一个**完整、可交互**的终端（`vim`/`top`/`ssh` 等全屏程序都能正常用，跟本地开一个真终端窗口体验一致）。适合"在另一台电脑或手机上，临时操作一下这台机器"的场景。
+网页终端：浏览器打开一个网页，就能看到并操作这台电脑上一个**完整、可交互**的终端（`vim`/`top`/`ssh` 等全屏程序都能正常用，跟本地开一个真终端窗口体验一致）。适合"在另一台电脑或手机上，临时操作一下这台机器"的场景。默认只面向局域网；要跨网络访问见[远程访问](#远程访问跨网络)，**务必先读那一节的安全要求**。
 
 ## 目录
 
@@ -13,6 +13,8 @@
 - [更新流程](#更新流程)
 - [权限与访问控制](#权限与访问控制)
 - [开机自启](#开机自启可选)
+- [远程访问（跨网络）](#远程访问跨网络)
+- [界面与 ZhaoUI](#界面与-zhaoui)
 - [环境变量](#环境变量)
 - [安全须知](#安全须知)
 - [已知问题](#已知问题)
@@ -83,7 +85,7 @@ flowchart LR
 | HTTP 路由 | `lib/routes.js` | 静态文件 + `/api/name`、`/api/version`、`/api/connections`、`/api/auth-status` |
 | 会话记录 | `lib/session-log.js` | 可选把终端输出落盘，按天数自动清理 |
 | 二维码 / 图标 | `lib/qr.js`、`lib/icon.js` | 启动时终端打印二维码、PWA 图标 |
-| 前端 | `public/index.html` | 单文件，[`xterm.js`](https://xtermjs.org/) 渲染终端，原生 WebSocket，无需构建 |
+| 前端 | `public/` | `index.html` + `termdoor.css` + `app.js`，以及按功能拆出的 `upload.js`、`helpers.js`、`token.js`；[`xterm.js`](https://xtermjs.org/) 渲染终端，原生 WebSocket，无需构建；界面样式和组件来自 ZhaoUI（`public/vendor/`） |
 | 运行时数据 | `../data/webcli/` | token / 电脑名 / 日志 / 证书 / 快捷命令，存在项目目录**外层**，不进 git、不跨机器共享 |
 
 ```mermaid
@@ -107,8 +109,9 @@ flowchart LR
 | 重新生成 token | 链接不小心截图分享/被人看到浏览器历史 |
 | 可选会话记录 | 想事后查这台电脑被远程做了什么 |
 | 可选二次验证 | token 单独泄露时再加一道独立防线 |
-| 主题 + 头部重新分组 | 界面拥挤，看不清当前谁连着 |
-| 快捷命令面板 | 常用命令（`cd` 到某目录、跑某个脚本）每次都要重新敲 |
+| 深色默认的主题 + 头部重新分组 | 界面拥挤，看不清当前谁连着；浅色、深色、跟随系统可在设置里切换 |
+| 快捷命令条 | 常用命令每次都要重新敲；桌面端在标签页下面，手机端在底部、辅助键上面，离拇指近 |
+| 浏览器记住 token | 每次打开不带 token 的地址都要手动输入；用对一次后自动记住，失效时自动回到输入框 |
 | 版本号常驻显示 | 多台电脑各自更新，版本容易对不上，出问题不好排查 |
 | 拖拽文件上传 | 传文件到远程机器不方便 |
 | 持久化修改监听端口 | 默认端口和别的服务冲突，每次都用环境变量覆盖太麻烦 |
@@ -137,7 +140,9 @@ flowchart TD
 <table>
 <tr><td width="200"><b>分享链接</b></td><td>
 
-启动日志里 `open:` 那行就是完整链接，或页面顶部"复制链接"按钮。链接里带 token，**泄露给谁就是把 shell 权限给了谁**——不要发到公开群里。
+启动日志里 `open:` 那行就是完整链接，或页面右上角的"复制链接"图标按钮（旁边是二维码按钮）。链接里带 token，**泄露给谁就是把 shell 权限给了谁**——不要发到公开群里。
+
+浏览器在服务端验证通过一次后，会把 token 存在这台设备的 `localStorage` 里，之后直接打开不带 token 的地址也能进。如果服务端换了 token（`./token.sh regen`），记住的旧 token 会在下次访问被拒后自动清掉，页面回到输入框。**共用的电脑上不要用这个功能的浏览器登录**，清掉站点数据即可忘记。
 
 </td></tr>
 <tr><td><b>二次验证</b><br><sub>默认关闭</sub></td><td>
@@ -194,6 +199,93 @@ WEBCLI_TLS=1 ./start.sh
 | 启用 | `launchctl load ~/Library/LaunchAgents/com.webcli.server.plist`<br><sub>模板见 `contrib/com.webcli.server.plist`，先替换里面的路径占位符</sub> | `schtasks /create /tn "webcli" /tr "C:\path\to\webcli\start.bat" /sc onlogon` |
 | 禁用 | `launchctl unload ~/Library/LaunchAgents/com.webcli.server.plist` | `schtasks /delete /tn "webcli" /f` |
 
+## 远程访问（跨网络）
+
+TermDoor 本身只负责"这台电脑上的网页终端"。要从别的网络访问，需要自己加一层转发，下面是三种做法。**这些步骤里的域名、IP、令牌都是占位符，换成你自己的；配置文件和令牌不要提交进仓库。**
+
+### 先满足这些，再暴露到公网
+
+终端能执行任意命令，暴露出去等于把这台电脑的 shell 交给能打开页面的人。
+
+1. **开二次验证**：`./auth.sh on`。这样除了链接里的 token，还要一把不在 URL 里的独立密钥（`./auth.sh status` 查看）。每次 `on` 都会换新密钥。
+2. **用 HTTPS**。明文 HTTP 下 token、密钥和终端里的所有内容都能被中间人看到。优先用下面的 Cloudflare Tunnel 或 nginx 反向代理，别直接用 `http://<IP>:<端口>`。
+3. **知道代理带来的一个副作用**：经过 frp、nginx、隧道转发后，TermDoor 看到的来访 IP 都是 `127.0.0.1`，"同一 IP 失败 10 次锁 5 分钟"会变成"任何人试错 10 次，所有人（包括你）被锁 5 分钟"。目前没有读取 `X-Forwarded-For` 的选项，所以别人可以靠故意输错来干扰你；二次验证加 HTTPS 之外，如果前面有 nginx，建议在 nginx 层再做一层限流或访问控制。
+4. frp 服务端的令牌要足够长且随机（例如 `openssl rand -hex 24`），它是 frp 控制端口的唯一保护。控制端口一旦对公网开放，会被扫描器持续尝试登录。
+
+### 做法一：Cloudflare Tunnel（不用开端口，自带 HTTPS）
+
+本机主动向外连 Cloudflare，不需要公网 IP、不需要在服务器上装任何东西，也不需要开防火墙端口。按 Cloudflare 官方文档创建隧道，把你的域名（例如 `term.example.com`）指到 `http://localhost:3050`。**这一做法我没有在本项目里实际验证过**，请以 [Cloudflare Tunnel 文档](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)为准；它同样适用上面的二次验证和限流提醒。
+
+### 做法二：frp（有自己的公网服务器）
+
+下面这套在 frp 0.71.0（服务端和客户端同版本）上实际验证过通路：本机的 3050 映射到服务器的一个端口，从公网侧访问能打开登录页。
+
+服务器 `frps.toml`：
+
+```toml
+bindPort = 7000
+auth.method = "token"
+auth.token = "<一串足够长的随机字符串>"
+
+# 只允许客户端映射这个范围内的端口
+allowPorts = [
+  { start = 6000, end = 6100 }
+]
+```
+
+本机 `frpc.toml`（权限设成 600，**不要提交**）：
+
+```toml
+serverAddr = "<你的服务器 IP 或域名>"
+serverPort = 7000
+auth.method = "token"
+auth.token = "<和 frps 一致>"
+
+[[proxies]]
+name = "termdoor"
+type = "tcp"
+localIP = "127.0.0.1"
+localPort = 3050
+remotePort = 6050
+```
+
+- 云服务器的安全组/防火墙要放行 `7000` 和你用的映射端口（例如 `6050`）。**不要动你的 SSH 端口规则。**
+- 这样得到的地址是 `http://<服务器 IP>:6050/`，**是明文 HTTP**。要 HTTPS，在服务器上再加一层 nginx（见做法三），并考虑让 frps 的映射端口只监听本机（frps 的 `proxyBindAddr`，请以你所用 frp 版本的文档为准），否则别人仍然可以绕过 nginx 直接访问明文端口。
+- 如果域名走 Cloudflare 的橙云代理：Cloudflare 只代理固定的几个端口，非标准端口（比如 `6050`）要用灰云（仅 DNS）。具体端口列表以 Cloudflare 官方文档为准。
+- 想让 frpc 开机自动连接，用 macOS 的 launchd 或 Linux 的 systemd 管理它，两者都不属于本项目。
+
+### 做法三：nginx 反向代理 + HTTPS
+
+在有公网地址的机器上，给你的域名配一个 HTTPS 站点，转发到 TermDoor（或 frp 映射出来的端口）。**必须带上 WebSocket 升级头和 `Host`**，TermDoor 的同源校验会拿浏览器的 `Origin` 和请求的 `Host` 比对：
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name term.example.com;
+    # ssl_certificate     /path/to/fullchain.pem;
+    # ssl_certificate_key /path/to/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:6050;   # frp 映射出来的端口；本机直接转发就写 3050
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 3600s;
+    }
+}
+```
+
+这段 nginx 配置是通用示例，**没有在本项目里实际跑过**，上线前请自己用 `nginx -t` 检查，并先在测试域名上试。
+
+## 界面与 ZhaoUI
+
+界面样式和组件来自 ZhaoUI（作者的 UI 组件库，原生 HTML/CSS/JS，无框架），三个文件复制在 `public/vendor/`：`zhaoui.css`、`zhaoui.js`、`zhaoui-icons.js`。颜色、间距、圆角、字体都引用 ZhaoUI 的 `--zh-*` 变量，主题由 `<html>` 的 `data-mode`（`light`/`dark`）控制。
+
+- ZhaoUI 仓库：`<待确认：ZhaoUI 的 GitHub 地址>`
+- 更新这三个文件后，要把 `lib/routes.js` 里 service worker 的 `CACHE` 名字加一档，否则老客户端会一直用缓存里的旧文件。
+- 许可证：`<待确认：本项目和 ZhaoUI 的许可证>`
+
 ## 环境变量
 
 | 变量 | 默认 | 说明 |
@@ -207,7 +299,9 @@ WEBCLI_TLS=1 ./start.sh
 
 ## 安全须知
 
-> 这是"局域网内部小工具"的信任模型，**不是给公网用的**：默认没有 HTTPS（明文传输）；服务监听 `0.0.0.0`，VPN/热点共享等网络里也能连进来；没有账号体系，谁有 token 谁就能跑任意命令；默认无操作审计。已经做的防护：WebSocket/写接口同源校验、鉴权失败每 IP 10 次锁 5 分钟、`Referrer-Policy: no-referrer`、上传文件名剥离目录穿越。**怀疑 token 泄露就 `./token.sh regen`。**
+> 默认的信任模型是"局域网内部小工具"：默认没有 HTTPS（明文传输）；服务监听 `0.0.0.0`，VPN/热点共享等网络里也能连进来；没有账号体系，**谁有 token 谁就能跑任意命令**；默认无操作审计。已经做的防护：WebSocket/写接口同源校验、鉴权失败每 IP 10 次锁 5 分钟、`Referrer-Policy: no-referrer`、上传文件名剥离目录穿越、可选的二次验证密钥。**怀疑 token 泄露就 `./token.sh regen`。**
+>
+> **想放到公网，必须先满足[远程访问](#远程访问跨网络)里的安全要求**，不要只靠一个 token 就把终端暴露出去。
 
 ## 已知问题
 
