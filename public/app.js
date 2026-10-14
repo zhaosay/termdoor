@@ -1,5 +1,8 @@
     const params = new URLSearchParams(location.search);
     const token = params.get('token');
+    // No token in the address: reuse the one this browser already got accepted.
+    const savedToken = token ? null : loadSavedToken();
+    if (savedToken) openWithToken(savedToken);
     const DEVICE_NAME_STORAGE = 'webcli-device-name';
 
     // Terminal status lines (connection lost/reconnected/etc.) show English
@@ -75,7 +78,7 @@
     }
 
     if (!token) {
-      document.getElementById('gate').style.display = 'flex';
+      if (!savedToken) document.getElementById('gate').style.display = 'flex';
       document.getElementById('gate-form').addEventListener('submit', (e) => {
         e.preventDefault();
         const v = document.getElementById('token-input').value.trim();
@@ -928,7 +931,15 @@
         try {
           const keyQ = secondaryKey ? `&key=${encodeURIComponent(secondaryKey)}` : '';
           const res = await fetch(`/api/sessions?token=${encodeURIComponent(token)}${keyQ}`);
-          if (res.ok) live = (await res.json()).sessions || [];
+          if (res.ok) {
+            rememberToken(token);
+            live = (await res.json()).sessions || [];
+          } else if (res.status === 401 && !secondaryKey) {
+            // the saved or typed token is no longer valid: forget it and ask again
+            forgetToken();
+            location.replace(location.pathname);
+            return;
+          }
         } catch {}
         const known = new Set(loadSids());
         const resumable = live.filter((s) => known.has(s.sid)).sort((a, b) => a.createdAt - b.createdAt);
