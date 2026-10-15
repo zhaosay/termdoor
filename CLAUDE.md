@@ -23,9 +23,10 @@
 
 ### 更新 ZhaoUI
 
-1. 把上表三个文件从 dist 重新复制过来，覆盖。
+1. ZhaoUI 仓库里的 `dist/` 是构建产物、不在仓库里，先在 ZhaoUI 仓库运行 `npm run build`。然后把上表三个文件从 `packages/ui/dist/` 重新复制过来，覆盖。
 2. 把 `lib/routes.js` 里 service worker 的 `CACHE` 名字加一档（现在是 `webcli-v2`）。`/vendor/` 在客户端是缓存优先，不改名的话老客户端一直用旧文件。
-3. 本机亮色、暗色、手机窄屏各看一次页面，再提交。
+3. 如果 ZhaoUI 的图标许可证声明有变化，同步更新根目录的 `THIRD_PARTY_NOTICES.md`（复制和分发这些文件必须带着它）。
+4. 本机亮色、暗色、手机窄屏各看一次页面，再提交。
 
 ## 保留的旧名（改了会让已部署的机器出问题）
 

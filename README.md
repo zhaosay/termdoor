@@ -283,8 +283,9 @@ server {
 界面样式和组件来自 ZhaoUI（作者的 UI 组件库，原生 HTML/CSS/JS，无框架），三个文件复制在 `public/vendor/`：`zhaoui.css`、`zhaoui.js`、`zhaoui-icons.js`。颜色、间距、圆角、字体都引用 ZhaoUI 的 `--zh-*` 变量，主题由 `<html>` 的 `data-mode`（`light`/`dark`）控制。
 
 - ZhaoUI 仓库：[github.com/zhaosay/zhaoui](https://github.com/zhaosay/zhaoui)
+- ZhaoUI 仓库里的 `dist/` 是构建产物、不提交到仓库：要更新这三个文件，先在 ZhaoUI 仓库里运行 `npm run build`，再从 `packages/ui/dist/` 复制 `zhaoui.min.css`、`zhaoui.min.js`、`zhaoui-icons.min.js`，分别改名为 `zhaoui.css`、`zhaoui.js`、`zhaoui-icons.js`。
 - 更新这三个文件后，要把 `lib/routes.js` 里 service worker 的 `CACHE` 名字加一档，否则老客户端会一直用缓存里的旧文件。
-- 许可证：本项目使用 [MIT 许可证](LICENSE)：可以自由使用、修改和分发，但需要保留版权声明和许可证文本（即署名引用）。`public/vendor/` 里的 ZhaoUI 文件以 ZhaoUI 仓库里的许可证为准：`<待确认：ZhaoUI 仓库的 LICENSE，上传时请一并添加>`
+- 许可证：本项目使用 [MIT 许可证](LICENSE)：可以自由使用、修改和分发，但需要保留版权声明和许可证文本（即署名引用）。ZhaoUI 同样是 MIT；它里面的图标来自 Lucide（ISC）和 Feather（MIT），这些声明保存在 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，复制或再分发 `public/vendor/` 里的文件时请一并保留。
 
 ## 环境变量
 
