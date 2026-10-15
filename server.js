@@ -5,7 +5,7 @@ const fs = require('fs');
 const { execFileSync, execFile } = require('child_process');
 const WebSocket = require('ws');
 const {
-  PORT, DATA_DIR, PID_FILE, USE_TLS, TLS_KEY_FILE, TLS_CERT_FILE,
+  PORT, REMOTE_PORT, DATA_DIR, PID_FILE, USE_TLS, TLS_KEY_FILE, TLS_CERT_FILE,
 } = require('./lib/config');
 const { TOKEN } = require('./lib/auth');
 const { createRequestHandler, cleanupOldUploads } = require('./lib/routes');
@@ -55,26 +55,30 @@ function openBrowser(url) {
 
 const handler = createRequestHandler();
 let tlsActive = USE_TLS;
-let server;
-if (USE_TLS) {
-  try {
-    server = https.createServer(loadTlsOptions(), handler);
-  } catch (err) {
-    console.error(`[termdoor] TLS setup failed (is openssl installed?), falling back to http: ${err.message}`);
-    tlsActive = false;
-  }
-}
-if (!server) server = http.createServer(handler);
 
-server.on('error', (err) => {
-  console.error(`[termdoor] server error: ${err.message}`);
-});
-
+// One factory for every listener, so the main port and the optional remote
+// port (see lib/config.js) serve exactly the same app.
 const wss = new WebSocket.Server({ noServer: true });
-
-server.on('upgrade', (req, socket, head) => {
-  handleUpgrade(req, socket, head, wss);
-});
+function createListener() {
+  let srv;
+  if (tlsActive) {
+    try {
+      srv = https.createServer(loadTlsOptions(), handler);
+    } catch (err) {
+      console.error(`[termdoor] TLS setup failed (is openssl installed?), falling back to http: ${err.message}`);
+      tlsActive = false;
+    }
+  }
+  if (!srv) srv = http.createServer(handler);
+  srv.on('error', (err) => {
+    console.error(`[termdoor] server error: ${err.message}`);
+  });
+  srv.on('upgrade', (req, socket, head) => {
+    handleUpgrade(req, socket, head, wss);
+  });
+  return srv;
+}
+const server = createListener();
 
 const heartbeat = startHeartbeat(wss);
 startTitlePoll();
@@ -121,6 +125,13 @@ server.listen(PORT, '0.0.0.0', () => {
   setInterval(() => { cleanupOldLogs(); cleanupOldUploads(); }, 24 * 60 * 60 * 1000).unref();
 
   console.log(`[termdoor] listening on 0.0.0.0:${PORT}${tlsActive ? ' (TLS, self-signed)' : ''}`);
+  if (REMOTE_PORT) {
+    // for a tunnel client (frp etc.): loopback only, secondary key always required
+    const remote = createListener();
+    remote.listen(REMOTE_PORT, '127.0.0.1', () => {
+      console.log(`[termdoor] remote listener on 127.0.0.1:${REMOTE_PORT} (secondary key always required)`);
+    });
+  }
   console.log('');
   console.log(qr.toTerminal(primary));
   console.log('');

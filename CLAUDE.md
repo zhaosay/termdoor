@@ -38,6 +38,14 @@
 - 新增的前端文件要在 `lib/routes.js` 的 `buildAssets()` 里注册，并在 `public/index.html` 里按顺序引入（在 `app.js` 之前）。
 - 页面脚本的 CSP 是 `script-src 'self'`，不能写内联脚本。
 
+## 两个端口
+
+主端口（默认 3050，0.0.0.0）和可选的远程端口（`WEBCLI_REMOTE_PORT` 或 `../data/webcli/remote-port.txt`，只监听 127.0.0.1，永远要二次密钥）。区分靠 `req.socket.localPort`，不要改成看 `Host` 头或来源 IP，那样可以被伪造。失败锁定按端口分开计数（`lib/auth.js` 的 `throttleKey`）。`auth.sh off` 不删密钥文件，因为远程端口还要用它。
+
+## 本机自动登录
+
+`local-autologin`（环境变量 `WEBCLI_LOCAL_AUTOLOGIN` 或 `../data/webcli/local-autologin.txt`），默认关闭。判断在 `lib/auth.js` 的 `isLocalAutologin`：必须不是远程端口、连接来源是回环地址、`Host` 头是 localhost/127.0.0.1 三条同时成立，才在 `lib/routes.js` 里对 `/` 做 302 带 token 跳转。不要放宽成只看其中一条：只看来源会被局域网自己的地址误触发，只看 `Host` 会被伪造。
+
 ## 验证
 
 没有自动化测试。改前端后：用项目的临时副本起一个实例，不要碰真实数据目录。

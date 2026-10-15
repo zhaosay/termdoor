@@ -26,8 +26,9 @@ goto :eof
 
 :off
 node -e "require('fs').writeFileSync(process.argv[1],'0')" "%FLAG_FILE%"
-del "%KEY_FILE%" >nul 2>&1
+rem the key file stays: the optional remote port always asks for it
 echo [termdoor] 二次验证已关闭，无需重启服务即可生效
+if exist "%KEY_FILE%" echo [termdoor] 密钥文件已保留：如果配了远程端口，它仍然要求这把密钥
 goto :eof
 
 :status
@@ -41,12 +42,16 @@ if "!ENABLED!"=="1" (
   )
 ) else (
   echo [termdoor] 当前状态: 已关闭
+  if exist "%KEY_FILE%" (
+    set /p CURKEY=<"%KEY_FILE%"
+    echo [termdoor] 远程端口使用的密钥: !CURKEY!
+  )
 )
 goto :eof
 
 :usage
 echo 用法: auth.bat on ^| off ^| status
 echo   on      开启二次验证（每次都会生成一把新密钥）
-echo   off     关闭二次验证
+echo   off     关闭二次验证（只影响本机端口；密钥文件保留，远程端口仍要求它）
 echo   status  查看当前状态
 exit /b 1

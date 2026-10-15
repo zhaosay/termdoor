@@ -9,7 +9,7 @@ KEY_FILE="$DATA_DIR/secondary-key.txt"
 usage() {
   echo "用法: ./auth.sh on | off | status"
   echo "  on      开启二次验证（每次都会生成一把新密钥）"
-  echo "  off     关闭二次验证"
+  echo "  off     关闭二次验证（只影响本机端口；密钥文件保留，远程端口仍要求它）"
   echo "  status  查看当前状态"
   exit 1
 }
@@ -28,8 +28,10 @@ case "${1:-}" in
     ;;
   off)
     printf '0' > "$FLAG_FILE"
-    rm -f "$KEY_FILE"
+    # the key file stays: the optional remote port (WEBCLI_REMOTE_PORT) always
+    # asks for it, whatever this switch says
     echo "[termdoor] 二次验证已关闭，无需重启服务即可生效"
+    [[ -f "$KEY_FILE" ]] && echo "[termdoor] 密钥文件已保留：如果配了远程端口，它仍然要求这把密钥"
     ;;
   status)
     if [[ -f "$FLAG_FILE" && "$(cat "$FLAG_FILE")" == "1" ]]; then
@@ -37,6 +39,7 @@ case "${1:-}" in
       [[ -f "$KEY_FILE" ]] && echo "[termdoor] 当前密钥: $(cat "$KEY_FILE")"
     else
       echo "[termdoor] 当前状态: 已关闭"
+      [[ -f "$KEY_FILE" ]] && echo "[termdoor] 远程端口使用的密钥: $(cat "$KEY_FILE")"
     fi
     ;;
   *)
