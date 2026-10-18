@@ -755,3 +755,67 @@
   @media (max-width: 700px) {
     #quickcmd-widget { order: 4; }
   }
+
+  /* ---- frp settings dialog ---- */
+  #frp-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .7);
+    padding: 20px;
+  }
+  #frp-modal.show { display: flex; }
+  #frp-modal .frp-card {
+    width: min(380px, 100%);
+    max-height: 90dvh;
+    overflow: auto;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: .75rem;
+  }
+  #frp-modal h3 { margin: 0 0 6px; font-size: 15px; color: var(--text); }
+  #frp-info { margin: 0 0 14px; font-size: 12px; color: var(--muted); }
+  #frp-form { display: flex; flex-direction: column; gap: 10px; }
+  #frp-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+  #frp-form input {
+    font: 13px var(--font-mono);
+    padding: 8px 10px;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    outline: none;
+  }
+  #frp-form input:focus { border-color: var(--accent); }
+  #frp-msg { display: none; font-size: 12px; color: var(--text); }
+  #frp-msg.show { display: block; }
+  #frp-msg.bad { color: var(--zh-text-danger, #ef4444); }
+  #frp-cmd {
+    display: none;
+    padding: 8px 10px;
+    font: 12px var(--font-mono);
+    word-break: break-all;
+    color: var(--muted);
+    background: var(--input-bg);
+    border-radius: .375rem;
+  }
+  #frp-cmd.show { display: block; }
+  #frp-actions { display: flex; gap: 8px; margin-top: 4px; }
+  #frp-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: .375rem;
+    cursor: pointer;
+  }
+  #frp-actions button[type="submit"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+  #frp-actions button:disabled { opacity: .45; cursor: not-allowed; }
+  #frp-actions button[hidden] { display: none; }
+  #frp-row[hidden] { display: none; }

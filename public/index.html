@@ -92,6 +92,13 @@
             <button type="button" id="restart-btn">重启服务</button>
           </div>
           <div id="service-action-status" class="settings-meta"></div>
+          <div id="frp-row" hidden>
+            <div class="settings-divider"></div>
+            <div class="settings-label">frp</div>
+            <div class="action-row">
+              <button type="button" id="frp-btn">frp 配置</button>
+            </div>
+          </div>
         </div>
       </div>
       </div>
@@ -150,6 +157,26 @@
           <button id="qr-close" type="button">关闭</button>
         </div>
       </div>
+      <div id="frp-modal">
+        <div class="frp-card">
+          <h3>frp 配置</h3>
+          <p id="frp-info"></p>
+          <form id="frp-form" autocomplete="off">
+            <label>服务器地址<input id="frp-server-addr" type="text" maxlength="253" autocomplete="off" spellcheck="false" required></label>
+            <label>控制端口<input id="frp-server-port" type="text" inputmode="numeric" maxlength="5" autocomplete="off" required></label>
+            <label>令牌<input id="frp-token" type="password" maxlength="128" autocomplete="new-password" spellcheck="false"></label>
+            <label>服务器上的映射端口<input id="frp-remote-port" type="text" inputmode="numeric" maxlength="5" autocomplete="off" required></label>
+            <label>代理名<input id="frp-proxy-name" type="text" maxlength="40" autocomplete="off" spellcheck="false"></label>
+            <div id="frp-msg"></div>
+            <code id="frp-cmd"></code>
+            <div id="frp-actions">
+              <button type="button" id="frp-clear" hidden>清除配置</button>
+              <button type="button" id="frp-cancel">关闭</button>
+              <button type="submit" id="frp-save">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
       <div id="quickcmd-modal">
         <div class="quickcmd-card">
           <h3>新增快捷命令</h3>
@@ -179,6 +206,7 @@
   <script src="/vendor/addon-search.js"></script>
   <script src="/vendor/zhaoui.js"></script>
   <script src="/vendor/zhaoui-icons.js"></script>
+  <script src="/frp.js"></script>
   <script src="/token.js"></script>
   <script src="/helpers.js"></script>
   <script src="/upload.js"></script>

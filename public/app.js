@@ -912,6 +912,7 @@
       });
 
       // ---- drag & drop upload ----
+      initFrp({ authQuery, closeAllDropdowns });
       wireDrop({
         panesEl,
         hint: document.getElementById('drop-hint'),

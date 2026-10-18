@@ -46,6 +46,10 @@
 
 `local-autologin`（环境变量 `WEBCLI_LOCAL_AUTOLOGIN` 或 `../data/webcli/local-autologin.txt`），默认关闭。判断在 `lib/auth.js` 的 `isLocalAutologin`：必须不是远程端口、连接来源是回环地址、`Host` 头是 localhost/127.0.0.1 三条同时成立，才在 `lib/routes.js` 里对 `/` 做 302 带 token 跳转。不要放宽成只看其中一条：只看来源会被局域网自己的地址误触发，只看 `Host` 会被伪造。
 
+## frp 配置页
+
+`lib/frp-config.js` 校验字段并生成 `../data/webcli/frpc.toml`，`lib/routes.js` 的 `/api/frp` 只接受本机请求（`isLocalRequest`），前端在 `public/frp.js`。几条不能破坏：配置只能由字段拼出，绝不接受页面传来的 TOML 片段；`localPort` 固定为远程端口；令牌从不返回给页面；不在页面里启动或重启 frpc。改动后要跑一遍注入测试（令牌或地址里夹换行、引号、`[[proxies]]`，应全部被拒且文件不变）。
+
 ## 验证
 
 没有自动化测试。改前端后：用项目的临时副本起一个实例，不要碰真实数据目录。
