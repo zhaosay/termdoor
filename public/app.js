@@ -96,11 +96,11 @@
         document.title = name;
         chromeTitle.textContent = name;
       };
-      fetch('/api/name').then((r) => r.json()).then(({ name }) => { if (name) applyName(name); }).catch(() => {});
+      terminalFetch('/api/name').then((r) => r.json()).then(({ name }) => { if (name) applyName(name); }).catch(() => {});
 
       const versionInfo = document.getElementById('version-info');
       const versionBadge = document.getElementById('version-badge');
-      fetch('/api/version').then((r) => r.json()).then(({ version, commit, commitDate, platform, projectRoot }) => {
+      terminalFetch('/api/version').then((r) => r.json()).then(({ version, commit, commitDate, platform, projectRoot }) => {
         const label = `v${version}${commit ? ' · ' + commit : ''}`;
         versionInfo.textContent = label;
         versionBadge.textContent = `v${version}`;
@@ -122,7 +122,7 @@
       }
 
       function refreshConnections() {
-        fetch(`/api/connections?${authQuery}`).then((r) => r.json()).then(({ connections }) => {
+        terminalFetch(`/api/connections?${authQuery}`).then((r) => r.json()).then(({ connections }) => {
           if (!Array.isArray(connections)) return;
           connCount.textContent = connections.length;
           connDropdown.innerHTML = '';
@@ -203,7 +203,7 @@
           del.title = '删除';
           del.addEventListener('click', (e) => {
             e.stopPropagation();
-            fetch(`/api/quick-commands?${authQuery}`, {
+            terminalFetch(`/api/quick-commands?${authQuery}`, {
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: item.id }),
@@ -285,7 +285,7 @@
         const command = quickcmdCommandInput.value.trim();
         const cwd = quickcmdCwdInput.value.trim();
         if (!label || !command) return;
-        fetch(`/api/quick-commands?${authQuery}`, {
+        terminalFetch(`/api/quick-commands?${authQuery}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ label, command, cwd }),
@@ -294,7 +294,7 @@
           renderQuickCommands(commands || []);
         }).catch(() => quickcmdModal.classList.remove('show'));
       });
-      fetch(`/api/quick-commands?${authQuery}`).then((r) => r.json())
+      terminalFetch(`/api/quick-commands?${authQuery}`).then((r) => r.json())
         .then(({ commands }) => renderQuickCommands(commands || [])).catch(() => {});
 
       const THEME_STORAGE = 'webcli-theme';
@@ -326,7 +326,7 @@
         let attempts = 0;
         const poll = setInterval(() => {
           attempts += 1;
-          fetch('/api/version').then((r) => {
+          terminalFetch('/api/version').then((r) => {
             if (!r.ok) throw new Error('not ready');
             clearInterval(poll);
             serviceActionStatus.textContent = '已恢复，正在刷新…';
@@ -344,7 +344,7 @@
         updateBtn.disabled = true;
         restartBtn.disabled = true;
         serviceActionStatus.textContent = `正在${label}…`;
-        fetch(`${path}?${authQuery}`, { method: 'POST' })
+        terminalFetch(`${path}?${authQuery}`, { method: 'POST' })
           .then((r) => {
             if (!r.ok) throw new Error('request failed');
             // Give the detached script a moment to actually stop the old
@@ -380,7 +380,7 @@
             return;
           }
           try {
-            const res = await fetch(`/api/name?token=${encodeURIComponent(token)}`, {
+            const res = await terminalFetch(`/api/name?token=${encodeURIComponent(token)}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name: value }),
@@ -524,7 +524,7 @@
       // Sessions live on the server, so remembering their ids lets a page
       // reload (or a second device opening the same link) pick the running
       // terminals back up instead of silently orphaning them.
-      const SIDS_STORAGE = 'webcli-sids';
+      const SIDS_STORAGE = 'webcli-sids' + TERMDoorBase;
       function loadSids() {
         try {
           const v = JSON.parse(localStorage.getItem(SIDS_STORAGE) || '[]');
@@ -569,7 +569,7 @@
         const deviceName = localStorage.getItem(DEVICE_NAME_STORAGE) || '';
         const deviceParam = deviceName ? `&device=${encodeURIComponent(deviceName)}` : '';
         const dims = `&cols=${session.term.cols}&rows=${session.term.rows}`;
-        const ws = new WebSocket(`${proto}://${location.host}/?token=${encodeURIComponent(token)}&sid=${encodeURIComponent(session.sid)}${keyParam}${deviceParam}${dims}`);
+        const ws = new WebSocket(`${proto}://${location.host}${TERMDoorBase}/?token=${encodeURIComponent(token)}&sid=${encodeURIComponent(session.sid)}${keyParam}${deviceParam}${dims}`);
         ws.binaryType = 'arraybuffer';
         session.ws = ws;
 
@@ -889,7 +889,7 @@
         document.getElementById('qr-box').innerHTML = '<p>生成中…</p>';
         try {
           const keyQ = secondaryKey ? `&key=${encodeURIComponent(secondaryKey)}` : '';
-          const res = await fetch(`/api/share?token=${encodeURIComponent(token)}${keyQ}`);
+          const res = await terminalFetch(`/api/share?token=${encodeURIComponent(token)}${keyQ}`);
           const data = await res.json();
           document.getElementById('qr-box').innerHTML = data.qr;
           document.getElementById('qr-url').textContent = data.url;
@@ -913,6 +913,7 @@
 
       // ---- drag & drop upload ----
       initFrp({ authQuery, closeAllDropdowns });
+      initOnline({ authQuery, closeAllDropdowns });
       wireDrop({
         panesEl,
         hint: document.getElementById('drop-hint'),
@@ -921,7 +922,7 @@
         t,
       });
 
-      if (location.protocol === 'https:' && 'serviceWorker' in navigator) {
+      if (!TERMDoorBase && location.protocol === 'https:' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
       }
 
@@ -931,7 +932,7 @@
         let live = [];
         try {
           const keyQ = secondaryKey ? `&key=${encodeURIComponent(secondaryKey)}` : '';
-          const res = await fetch(`/api/sessions?token=${encodeURIComponent(token)}${keyQ}`);
+          const res = await terminalFetch(`/api/sessions?token=${encodeURIComponent(token)}${keyQ}`);
           if (res.ok) {
             rememberToken(token);
             live = (await res.json()).sessions || [];
@@ -971,8 +972,8 @@
         document.getElementById('device-skip').addEventListener('click', () => finish(''), { once: true });
       }
 
-      const SECONDARY_KEY_STORAGE = 'webcli-secondary-key';
-      fetch('/api/auth-status').then((r) => r.json()).then(({ enabled }) => {
+      const SECONDARY_KEY_STORAGE = 'webcli-secondary-key' + TERMDoorBase;
+      terminalFetch('/api/auth-status').then((r) => r.json()).then(({ enabled }) => {
         if (!enabled) {
           startApp(null);
           return;

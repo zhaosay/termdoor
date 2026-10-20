@@ -1,7 +1,7 @@
 // Remembers the access token in this browser, so opening the bare address goes
 // straight in instead of asking for it every time. Classic script, loaded
 // before app.js. The token is only stored after the server has accepted it.
-const TOKEN_STORAGE = 'webcli-token';
+const TOKEN_STORAGE = 'webcli-token' + TERMDoorBase;
 
 function loadSavedToken() {
   try { return localStorage.getItem(TOKEN_STORAGE) || null; } catch { return null; }

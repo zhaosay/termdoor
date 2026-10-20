@@ -1,0 +1,24 @@
+[Unit]
+Description=TermDoor online center
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=termdoor
+Group=termdoor
+WorkingDirectory=/opt/termdoor-center
+Environment=TERMDOOR_CENTER_DATA=/var/lib/termdoor-center
+EnvironmentFile=/etc/termdoor-center.env
+ExecStart=/usr/bin/node /opt/termdoor-center/center/server.js
+Restart=always
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/termdoor-center
+
+[Install]
+WantedBy=multi-user.target

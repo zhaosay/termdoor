@@ -1,0 +1,20 @@
+[Unit]
+Description=TermDoor isolated frp server
+After=network-online.target termdoor-center.service
+Wants=network-online.target termdoor-center.service
+
+[Service]
+Type=simple
+User=termdoor
+Group=termdoor
+ExecStart=/usr/local/bin/frps -c /opt/termdoor-center/center/deploy/frps.toml
+Restart=always
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

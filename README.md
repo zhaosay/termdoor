@@ -210,6 +210,32 @@ WEBCLI_TLS=1 ./start.sh
 | 启用 | `launchctl load ~/Library/LaunchAgents/com.webcli.server.plist`<br><sub>模板见 `contrib/com.webcli.server.plist`，先替换里面的路径占位符</sub> | `schtasks /create /tn "webcli" /tr "C:\path\to\webcli\start.bat" /sc onlogon` |
 | 禁用 | `launchctl unload ~/Library/LaunchAgents/com.webcli.server.plist` | `schtasks /delete /tn "webcli" /f` |
 
+## 线上设备中心（可选）
+
+本地端仍可独立在局域网使用，不需要账号或服务器。开启线上连接后，可以在中心网站登录，查看自己的设备并进入终端。
+
+中心地址由部署者提供，例如 `https://center.example.com`（示例地址，请替换）。账号由中心管理员创建，无公开注册。
+
+### 接入一台电脑
+
+1. 在中心网站登录，点击「接入新设备」，取得一个 10 分钟有效、只能使用一次的绑定码。
+2. 在目标电脑更新到 **0.12.0 或更新版本**并重启 TermDoor，用该电脑自己的浏览器打开 `http://localhost:3050`（端口按实际配置），完成原有 token / 二次密钥验证。macOS / Linux 可运行 `./update.sh`，Windows 可运行 `update.bat`；更新会重启服务，请先保存终端中的工作。
+3. 打开设置 →「线上连接」，填写中心地址和绑定码，点击「绑定并连接」。入口只在本机显示。
+4. 本地端自动寻找 frpc；如果没有，会下载 frp 0.71.0，核对 GitHub 发布的 SHA-256 后安装到数据目录。支持 macOS、Linux、Windows 的 x64 / arm64；Windows 需要系统自带的 `tar`。
+5. 等中心列表显示「在线」后，点击「打开终端」。浏览器不需要安装 frp。
+
+如果没有「线上连接」入口，先确认页面版本至少为 0.12.0，再刷新页面，并确认访问的是目标电脑的 `localhost` 主端口。从局域网 IP、远程端口或中心代理页面访问时，此管理入口会隐藏。若自动下载 frpc 失败，可安装 frp 0.71.0，并在启动 TermDoor 前设置 `WEBCLI_FRPC_PATH` 为 frpc 可执行文件的绝对路径。
+
+本地端通过 HTTPS/WSS 的 443 端口连接中心，使用独立设备凭证，不使用手工 frp 配置中的共享令牌。线上专用终端端口动态分配、只监听本机回环地址，始终要求第二把密钥；不会改动原有主端口、远程端口或 `frpc.toml`。证书使用 Node 内置可信 CA 校验。
+
+「断开线上连接」会停止本地托管的 frpc，删除本地线上配置；局域网继续可用。中心的「解绑」会撤销凭证，并立即断开该设备的线上终端连接。设备必须重新生成绑定码才能接入。设备最近心跳有效且终端隧道鉴权检查成功，才显示在线。
+
+运行时新增文件保存在 `../data/webcli/`：`online.json`、`online-frpc.toml`、`online-ca.pem`、`online-frpc*.log` 和 `bin/frpc`，都不进入仓库。`online.json` 含设备密钥，请作为敏感文件保管。可用 `WEBCLI_FRPC_PATH` 指定已有 frpc 的绝对路径。
+
+电脑开机后自动上线，需要让 TermDoor 开机自启；本地端会随服务启动恢复线上连接。macOS 可使用现有 launchd 模板，Windows 使用现有登录计划任务。
+
+中心端部署、账号和运维说明见 [center/README.md](center/README.md)。
+
 ## 远程访问（跨网络）
 
 TermDoor 本身只负责"这台电脑上的网页终端"。要从别的网络访问，需要自己加一层转发，下面是三种做法。**这些步骤里的域名、IP、令牌都是占位符，换成你自己的；配置文件和令牌不要提交进仓库。**

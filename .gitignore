@@ -1,2 +1,13 @@
 node_modules/
 .run/
+.DS_Store
+.env
+.env.*
+!.env.example
+online.json
+online-frpc.toml
+online-ca.pem
+frpc.toml
+*-credentials.txt
+store.json
+*.log

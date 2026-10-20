@@ -7,7 +7,8 @@ const WebSocket = require('ws');
 const {
   PORT, REMOTE_PORT, DATA_DIR, PID_FILE, USE_TLS, TLS_KEY_FILE, TLS_CERT_FILE,
 } = require('./lib/config');
-const { TOKEN } = require('./lib/auth');
+const { TOKEN, registerRemotePort } = require('./lib/auth');
+const online = require('./lib/online');
 const { createRequestHandler, cleanupOldUploads } = require('./lib/routes');
 const {
   handleUpgrade, shutdownAll, startHeartbeat, startTitlePoll,
@@ -59,9 +60,9 @@ let tlsActive = USE_TLS;
 // One factory for every listener, so the main port and the optional remote
 // port (see lib/config.js) serve exactly the same app.
 const wss = new WebSocket.Server({ noServer: true });
-function createListener() {
+function createListener(plainHttp = false) {
   let srv;
-  if (tlsActive) {
+  if (tlsActive && !plainHttp) {
     try {
       srv = https.createServer(loadTlsOptions(), handler);
     } catch (err) {
@@ -79,11 +80,24 @@ function createListener() {
   return srv;
 }
 const server = createListener();
+let onlineListener;
+online.configure(async () => {
+  if (onlineListener) return onlineListener.address().port;
+  onlineListener = createListener(true);
+  await new Promise((resolve, reject) => {
+    onlineListener.once('error', reject);
+    onlineListener.listen(0, '127.0.0.1', resolve);
+  });
+  const port = onlineListener.address().port;
+  registerRemotePort(port);
+  return port;
+});
 
 const heartbeat = startHeartbeat(wss);
 startTitlePoll();
 
 function shutdown(code = 0) {
+  online.stop();
   clearInterval(heartbeat);
   shutdownAll();
   try { fs.unlinkSync(PID_FILE); } catch {}

@@ -57,7 +57,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
   }
 
   async function call(method, body) {
-    const res = await fetch(API, {
+    const res = await terminalFetch(API, {
       method,
       headers: body ? { 'Content-Type': 'application/json' } : {},
       body: body ? JSON.stringify(body) : undefined,
@@ -67,7 +67,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
     return data;
   }
 
-  fetch(API).then((r) => (r.ok ? r.json() : null)).then((st) => {
+  terminalFetch(API).then((r) => (r.ok ? r.json() : null)).then((st) => {
     if (!st) return;
     row.hidden = false;
     $('frp-btn').addEventListener('click', async () => {

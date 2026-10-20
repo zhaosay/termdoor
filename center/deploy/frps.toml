@@ -1,0 +1,11 @@
+bindAddr = "127.0.0.1"
+bindPort = 17000
+proxyBindAddr = "127.0.0.1"
+allowPorts = [{ start = 16000, end = 16999 }]
+maxPortsPerClient = 1
+
+[[httpPlugins]]
+name = "termdoor-device-auth"
+addr = "127.0.0.1:17002"
+path = "/"
+ops = ["Login", "NewProxy", "Ping", "NewWorkConn"]

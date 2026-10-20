@@ -99,6 +99,10 @@
               <button type="button" id="frp-btn">frp 配置</button>
             </div>
           </div>
+          <div id="online-row" hidden>
+            <div class="settings-divider"></div>
+            <div class="action-row"><button type="button" id="online-button">线上连接</button></div>
+          </div>
         </div>
       </div>
       </div>
@@ -201,12 +205,25 @@
     </div>
   </div>
 
+  <dialog id="online-dialog">
+    <form method="dialog"><button type="submit">关闭</button></form>
+    <h3>线上连接</h3>
+    <p id="online-info" role="status"></p>
+    <form id="online-form">
+      <label>中心地址<input id="online-center" type="url" placeholder="https://center.example.com" required></label>
+      <label>一次性绑定码<input id="online-code" autocomplete="off" maxlength="16" required></label>
+      <button id="online-bind" type="submit">绑定并连接</button>
+      <button id="online-disconnect" type="button" hidden>断开线上连接</button>
+    </form>
+  </dialog>
+  <script src="/base.js"></script>
   <script src="/vendor/xterm.js"></script>
   <script src="/vendor/addon-fit.js"></script>
   <script src="/vendor/addon-search.js"></script>
   <script src="/vendor/zhaoui.js"></script>
   <script src="/vendor/zhaoui-icons.js"></script>
   <script src="/frp.js"></script>
+  <script src="/online.js"></script>
   <script src="/token.js"></script>
   <script src="/helpers.js"></script>
   <script src="/upload.js"></script>

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN" data-mode="dark" data-density="standard">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TermDoor · 我的设备</title>
+  <link rel="stylesheet" href="/vendor/zhaoui.css">
+  <link rel="stylesheet" href="/center.css">
+  <script src="/center.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="/">TermDoor<span>浏览器里的终端之门</span></a><div id="account" hidden><span id="username"></span><button id="password-button">修改密码</button><button id="logout">退出</button></div></header>
+  <main>
+    <section id="login" hidden>
+      <div class="intro"><p class="eyebrow">随时连接你的电脑</p><h1>设备在远方，<br>终端在眼前。</h1><p>登录后，打开你已接入的在线设备。</p></div>
+      <form id="login-form" class="panel"><h2>登录 TermDoor</h2><label>用户名<input name="username" autocomplete="username" required maxlength="40"></label><label>密码<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button class="primary" type="submit">登录</button></form>
+    </section>
+    <section id="dashboard" hidden>
+      <div class="heading"><div><p class="eyebrow">你的工作空间</p><h1>我的设备</h1><p id="summary">正在检查设备状态…</p></div><button id="bind" class="primary">接入新设备</button></div>
+      <div id="devices" aria-live="polite"></div>
+      <div id="empty" class="panel" hidden><h2>接入第一台电脑</h2><p>生成绑定码，在那台电脑的 TermDoor 本地设置中完成绑定。</p></div>
+    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+  </main>
+  <dialog id="bind-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>接入一台电脑</h2><p>在目标电脑的 TermDoor 设置中选择「线上连接」，填写：</p><label>中心地址<input readonly id="center-url"></label><label>一次性绑定码<input readonly id="bind-code"></label><p>绑定码 10 分钟内有效，只能使用一次。局域网功能仍可独立使用。</p><button id="copy-code" class="primary">复制绑定码</button></dialog>
+  <dialog id="password-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>修改密码</h2><form id="password-form"><label>当前密码<input name="current" type="password" autocomplete="current-password" required maxlength="256"></label><label>新密码<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><p>至少 12 个字符。修改后需要重新登录。</p><button class="primary" type="submit">保存密码</button></form><p id="password-message" role="status"></p></dialog>
+</body>
+</html>

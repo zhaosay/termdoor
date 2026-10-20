@@ -17,7 +17,7 @@ function wireDrop({ panesEl, hint, authQuery, currentSession, t }) {
     for (const file of [...(e.dataTransfer.files || [])]) {
       const session = currentSession();
       try {
-        const res = await fetch(`/api/upload?${authQuery}`, {
+        const res = await terminalFetch(`/api/upload?${authQuery}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/octet-stream',

@@ -819,3 +819,15 @@
   #frp-actions button:disabled { opacity: .45; cursor: not-allowed; }
   #frp-actions button[hidden] { display: none; }
   #frp-row[hidden] { display: none; }
+#online-dialog {
+  color: var(--zh-text);
+  background: var(--zh-bg);
+  border: 1px solid var(--zh-border);
+  border-radius: var(--zh-radius-lg);
+  width: min(480px, calc(100vw - 32px));
+  padding: var(--zh-space-6);
+}
+#online-dialog::backdrop { background: rgb(0 0 0 / .65); }
+#online-dialog label { display: block; margin: var(--zh-space-4) 0; }
+#online-dialog input { display: block; width: 100%; margin-top: var(--zh-space-2); padding: var(--zh-space-3); color: inherit; background: var(--zh-bg-elevated); border: 1px solid var(--zh-border); border-radius: var(--zh-radius-md); }
+#online-dialog button { cursor: pointer; padding: var(--zh-space-2) var(--zh-space-3); }
