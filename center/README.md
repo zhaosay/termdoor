@@ -1,5 +1,7 @@
 # TermDoor center
 
+中文部署与自定义域名教程：[自建线上设备中心](SELF_HOSTING.zh-CN.md)。
+
 The center is an optional application. LAN-only users run `server.js` as before.
 The center provides password login, per-account device ownership, one-time
 enrollment, device status, HTTP/WebSocket proxying, and device revocation.
