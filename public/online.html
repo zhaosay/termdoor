@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN" data-mode="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>TermDoor · 线上接入</title>
+  <link rel="stylesheet" href="/vendor/zhaoui.css">
+  <link rel="stylesheet" href="/online-page.css">
+  <script src="/theme-init.js"></script>
+  <script src="/base.js" defer></script>
+  <script src="/token.js" defer></script>
+  <script src="/online.js" defer></script>
+  <script src="/online-page.js" defer></script>
+</head>
+<body>
+  <main>
+    <a href="/">← 返回本机终端</a>
+    <h1>把这台电脑接入线上</h1>
+    <p>在目标电脑上打开本页。填写你使用的中心地址和一次性绑定码，接入后即可从中心网站打开这台电脑的终端。</p>
+    <section aria-labelledby="auth-title">
+      <h2 id="auth-title">1. 验证本机权限</h2>
+      <p>这里使用本机 TermDoor 的访问令牌，与线上中心账号密码不同。已在此浏览器登录过时会自动填入。</p>
+      <form id="online-auth-form">
+        <label>本机访问令牌<input id="online-token" type="password" autocomplete="off" required></label>
+        <label>本机二次密钥（启用时必填）<input id="online-key" type="password" autocomplete="off"></label>
+        <button type="submit">验证 / 刷新状态</button>
+      </form>
+    </section>
+    <section aria-labelledby="bind-title">
+      <h2 id="bind-title">2. 设置线上中心</h2>
+      <p>先登录你使用的中心网站，点击「接入新设备」获取 10 分钟有效、只能使用一次的绑定码。</p>
+      <p id="online-info" role="status" aria-live="polite">正在读取接入状态…</p>
+      <form id="online-form">
+        <label>中心地址<input id="online-center" type="url" placeholder="https://center.example.com" required disabled></label>
+        <label>一次性绑定码<input id="online-code" autocomplete="off" maxlength="16" required disabled></label>
+        <div class="actions"><button id="online-bind" type="submit" disabled>绑定并连接</button><button id="online-disconnect" type="button" hidden>断开线上连接</button></div>
+      </form>
+    </section>
+    <p>接入失败时，本页会显示具体错误。端口默认为 3050，若已修改端口，请用实际主端口访问；不要从远程端口或中心代理页面执行绑定。</p>
+  </main>
+</body>
+</html>

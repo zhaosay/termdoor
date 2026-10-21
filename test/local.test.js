@@ -33,8 +33,13 @@ test('LAN terminal and local-only management remain protected', async (t) => {
   const local = await get(`/api/online?token=${token}`); assert.equal(local.status, 200); assert.equal((await local.json()).configured, false);
   const html = await (await get(`/?token=${token}`)).text();
   assert.match(html, /id="online-button"/);
+  assert.doesNotMatch(html, /id="online-row" hidden/);
   assert.ok(html.indexOf('src="/base.js"') < html.indexOf('src="/app.js"'));
-  for (const file of ['base.js', 'online.js']) assert.equal((await get(`/${file}`)).status, 200);
+  for (const file of ['base.js', 'online.js', 'online-page.js', 'online-page.css']) assert.equal((await get(`/${file}`)).status, 200);
+  const setup = await get('/online.html');
+  assert.equal(setup.status, 200);
+  assert.match(setup.headers.get('content-type'), /text\/html/);
+  assert.match(await setup.text(), /id="online-auth-form"/);
   assert.equal((await fetch(`http://localhost:17704/api/online?token=${token}&key=${'b'.repeat(32)}`)).status, 403);
   assert.equal((await fetch(`http://localhost:17704/api/sessions?token=${token}`)).status, 401);
   assert.equal((await fetch(`http://localhost:17704/api/sessions?token=${token}&key=${'b'.repeat(32)}`)).status, 200);

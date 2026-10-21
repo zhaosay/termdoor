@@ -6,6 +6,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:var(--z
 .brand{color:inherit;text-decoration:none;font-size:var(--zh-font-title);font-weight:700;display:flex;align-items:baseline;gap:var(--zh-space-4)}
 .brand span,.eyebrow{font-size:var(--zh-font-base);color:var(--zh-text-secondary);font-weight:400}
 #account{display:flex;align-items:center;gap:var(--zh-space-3);flex-wrap:wrap}
+.setup-nav{color:var(--zh-color-primary);white-space:nowrap}
 main{max-width:1100px;margin:auto;padding:var(--zh-space-12) var(--zh-space-6)}
 #login{display:grid;grid-template-columns:1.3fr 1fr;align-items:center;gap:var(--zh-space-12);min-height:65dvh}
 h1{font-size:clamp(2.4rem,5vw,4.4rem);font-weight:500;line-height:1.18;letter-spacing:-.04em;margin:var(--zh-space-4) 0 var(--zh-space-6)}
@@ -21,10 +22,15 @@ button:disabled{opacity:.5;cursor:wait}
 .primary:hover,.open:hover{filter:brightness(1.12);background:var(--zh-color-primary)}
 #login-form .primary,#password-form .primary{width:100%}
 .heading{display:flex;justify-content:space-between;align-items:center;gap:var(--zh-space-6);margin-bottom:var(--zh-space-10)}
-.device{display:flex;align-items:center;justify-content:space-between;gap:var(--zh-space-4);padding:var(--zh-space-6) 0;border-top:1px solid var(--zh-border)}
+.device{display:grid;grid-template-columns:3ch minmax(0,1fr) auto;align-items:center;gap:var(--zh-space-4);padding:var(--zh-space-6) 0;border-top:1px solid var(--zh-border)}
+.device-number{color:var(--zh-text-secondary);font-variant-numeric:tabular-nums}
 .device h2{margin:0 0 var(--zh-space-2);font-size:var(--zh-font-base);overflow-wrap:anywhere}
 .device p{margin:0;font-size:var(--zh-font-base)}
-.device-actions{display:flex;gap:var(--zh-space-3);flex-shrink:0}
+.device-actions{display:grid;grid-template-columns:7.5em auto;align-items:center;gap:var(--zh-space-3)}
+.device-open-slot .open{width:100%;text-align:center}
+#setup-guide{margin-top:var(--zh-space-10)}
+#setup-guide li{line-height:1.8;margin-bottom:var(--zh-space-3)}
+#setup-guide a:not(.open){color:var(--zh-color-primary)}
 .online{color:var(--zh-success)}
 .offline{color:var(--zh-text-secondary)}
 dialog{color:var(--zh-text);width:min(520px,calc(100vw - 32px));max-height:90dvh;overflow:auto}
@@ -32,4 +38,4 @@ dialog::backdrop{background:rgb(0 0 0 / .65)}
 .close{float:right;padding:0 var(--zh-space-2);font-size:var(--zh-font-title)}
 #bind-code{font-family:var(--zh-font-mono);font-size:var(--zh-font-base)}
 #message,#password-message{color:var(--zh-danger);overflow-wrap:anywhere}
-@media(max-width:680px){header{padding:var(--zh-space-4)}.brand span{display:none}main{padding:var(--zh-space-8) var(--zh-space-4)}#login{grid-template-columns:1fr;gap:var(--zh-space-6);min-height:auto}.heading{align-items:flex-start;flex-direction:column}.device{align-items:flex-start;flex-direction:column}.device-actions{width:100%}.panel{padding:var(--zh-space-6)}h1{font-size:2.8rem}}
+@media(max-width:680px){header{padding:var(--zh-space-4)}.brand span{display:none}main{padding:var(--zh-space-8) var(--zh-space-4)}#login{grid-template-columns:1fr;gap:var(--zh-space-6);min-height:auto}.heading{align-items:flex-start;flex-direction:column}.device{grid-template-columns:3ch minmax(0,1fr);align-items:start}.device-actions{grid-column:2;justify-self:start}.panel{padding:var(--zh-space-6)}h1{font-size:2.8rem}}
