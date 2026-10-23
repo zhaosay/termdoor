@@ -103,8 +103,8 @@ function shutdown(code = 0) {
   try { fs.unlinkSync(PID_FILE); } catch {}
   process.exit(code);
 }
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGTERM', () => shutdown(0));
+process.on('SIGINT', () => shutdown(0));
 
 // Route handlers already guard against throwing (createRequestHandler wraps
 // its dispatch in try/catch), but anything that still slips through — a bug
