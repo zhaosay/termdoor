@@ -1,5 +1,7 @@
 const errors = require('../public/errors');
 const cli = require('../lib/cli-ui');
+process.on('uncaughtException', (err) => { cli.report(err, { fatal: true }); process.exit(1); });
+process.on('unhandledRejection', (err) => { cli.report(err, { fatal: true }); process.exit(1); });
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -192,6 +194,7 @@ async function handle(req, res) {
 const server = http.createServer((req, res) => {
   handle(req, res).catch(() => { if (!res.headersSent) json(res, 400, { error: '请求处理失败' }); else res.destroy(); });
 });
+server.on('error', (err) => { cli.report(err, { fatal: true }); process.exit(1); });
 server.on('upgrade', (req, socket, head) => {
   const user = session(req);
   const terminal = user && terminalRoute(req, user);
