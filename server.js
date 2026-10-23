@@ -156,7 +156,7 @@ server.listen(PORT, '0.0.0.0', () => {
     });
   }
   console.log('');
-  console.log(qr.toTerminal(primary));
+  cli.scanCode(qr.toTerminal(primary));
   console.log('');
   console.log(`[termdoor] open: ${primary}`);
   openBrowser(primary);

@@ -19,8 +19,8 @@ cd "$(dirname "$SELF")"
 PORT_FILE="../data/webcli/port.txt"
 LOG_FILE=".run/run.log"
 
-BOLD=$'\033[1m'; DIM=$'\033[2m'; GREEN=$'\033[32m'; RED=$'\033[31m'
-YELLOW=$'\033[33m'; CYAN=$'\033[36m'; RESET=$'\033[0m'
+BOLD=$'\033[1m'; DIM=$'\033[1m'; GREEN=$'\033[92;1m'; RED=$'\033[31m'
+YELLOW=$'\033[93;1m'; CYAN=$'\033[96;1m'; RESET=$'\033[0m'
 if [ ! -t 1 ] || [ -n "${NO_COLOR+x}" ] || [ "${TERM:-}" = dumb ]; then
   BOLD=''; DIM=''; GREEN=''; RED=''; YELLOW=''; CYAN=''; RESET=''
 fi
@@ -45,13 +45,14 @@ header() {
   echo -n "  二次验证 "; flag_on auth-enabled && echo -n "${GREEN}开${RESET}" || echo -n "${DIM}关${RESET}"
   echo -n "   会话记录 "; flag_on log-enabled && echo "${GREEN}开${RESET}" || echo "${DIM}关${RESET}"
   echo
-  echo "  ${CYAN}-- 出发 / LET'S GO ------------------------------${RESET}"
-  echo "  ${BOLD}1${RESET}  启动 / 重启        Start / Restart"
-  echo "  ${BOLD}2${RESET}  停止               Stop"
-  echo "  ${BOLD}3${RESET}  更新并重启         Update"
-  echo "  ${BOLD}4${RESET}  访问链接与二维码   Links + QR"
+  echo "  ${CYAN}+ 出发 / PLAY -----------------------------------${RESET}"
+  echo "  ${GREEN}[1]${RESET}  ${BOLD}启动 / 重启${RESET}        Start / Restart"
+  echo "  ${CYAN}[2]${RESET}  ${BOLD}停止${RESET}               Stop"
   echo
-  echo "  ${YELLOW}-- 小工具 / TOOLBOX ----------------------------${RESET}"
+  echo "  ${CYAN}[3]${RESET}  ${BOLD}更新并重启${RESET}         Update"
+  echo "  ${CYAN}[4]${RESET}  ${BOLD}链接与二维码${RESET}       Links + QR"
+  echo
+  echo "  ${YELLOW}+ 装备 / INVENTORY ------------------------------${RESET}"
   echo "  ${DIM}5  二次验证 / Auth     6  更新令牌 / Token${RESET}"
   echo "  ${DIM}7  会话记录 / Record   8  查看日志 / Logs${RESET}"
   echo "  ${DIM}9  安装命令 / Install   p  端口 / Port${RESET}"
