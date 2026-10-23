@@ -3,6 +3,11 @@
   else root.TermDoorErrors = factory();
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const catalog = [
+    {"code":"TD-UPDATE-004","key":"update preparation failed","zh":"更新准备失败，服务未重启","en":"Update preparation failed; service was not restarted","hint":"检查网络、安装日志和磁盘空间；已切换版本时运行 node lib/update.js recover / Check network, install logs and disk space; run node lib/update.js recover if the checkout changed."},
+    {"code":"TD-UPDATE-005","key":"update recovery changed","zh":"代码版本已变化，恢复已停止","en":"Recovery stopped because the checkout changed","hint":"保存当前工作并人工核对恢复点 / Save current work and inspect the recovery checkpoint."},
+    {"code":"TD-BACKUP-001","key":"backup invalid","zh":"备份格式或校验无效","en":"Backup format or checksum is invalid","hint":"使用完整且可信的中心备份文件 / Use a complete trusted center backup."},
+    {"code":"TD-BACKUP-002","key":"backup failed","zh":"备份或恢复失败","en":"Backup or restore failed","hint":"检查权限与目标路径；备份文件和恢复目录必须是新的 / Check permissions and destination; backup file and restore directory must be new."},
+    {"code":"TD-BACKUP-003","key":"backup usage","zh":"备份命令参数不完整","en":"Backup command arguments are incomplete","hint":"使用 node center/backup.js backup 数据目录 备份文件，或 restore 备份文件 新目录 / Use node center/backup.js backup DATA_DIR BACKUP_FILE, or restore BACKUP_FILE NEW_DIR."},
     {"code":"TD-CONNECT-001","key":"device heartbeat offline","zh":"设备未通信","en":"Device is not reporting","hint":"在目标电脑启动 TermDoor，再点重新检查 / Start TermDoor on the target computer and retry."},
     {"code":"TD-CONNECT-002","key":"device tunnel blocked","zh":"通路验证失败","en":"Tunnel authentication failed","hint":"在目标电脑打开设备接入页，检查本机凭据 / Open Device enrollment on the target computer and check local credentials."},
     {"code":"TD-CONNECT-003","key":"device tunnel unavailable","zh":"通路未连通","en":"Tunnel is unavailable","hint":"在目标电脑的设备接入页检查网络与连接状态，再重试 / Check network and tunnel status on the target computer, then retry."},

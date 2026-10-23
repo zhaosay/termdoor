@@ -109,3 +109,13 @@ TermDoor 的网页、接口与终端共用 `public/errors.js` 错误目录。错
 | 4 | `TD-CONNECT-004` | 应用未启用 | Application is not enabled | 在目标电脑的应用与维护页启用应用 / Enable the application in Applications and maintenance on the target computer. |
 | 5 | `TD-CONNECT-005` | 应用访问密钥不可用 | Application access key is unavailable | 在目标电脑的应用与维护页检查密钥文件 / Check the key file in Applications and maintenance on the target computer. |
 | 6 | `TD-CONNECT-006` | 应用服务未就绪 | Application service is not ready | 在目标电脑启动应用并测试连接 / Start the application on the target computer and test its connection. |
+
+## 更新恢复与备份
+
+| 序号 | 错误码 | 中文 | English | 处理 |
+| --- | --- | --- | --- | --- |
+| 1 | `TD-UPDATE-004` | 更新准备失败，服务未重启 | Update preparation failed; service was not restarted | 检查网络、安装日志和磁盘空间；已切换版本时运行 node lib/update.js recover / Check network, install logs and disk space; run node lib/update.js recover if the checkout changed. |
+| 2 | `TD-UPDATE-005` | 代码版本已变化，恢复已停止 | Recovery stopped because the checkout changed | 保存当前工作并人工核对恢复点 / Save current work and inspect the recovery checkpoint. |
+| 3 | `TD-BACKUP-001` | 备份格式或校验无效 | Backup format or checksum is invalid | 使用完整且可信的中心备份文件 / Use a complete trusted center backup. |
+| 4 | `TD-BACKUP-002` | 备份或恢复失败 | Backup or restore failed | 检查权限与目标路径；备份文件和恢复目录必须是新的 / Check permissions and destination; backup file and restore directory must be new. |
+| 5 | `TD-BACKUP-003` | 备份命令参数不完整 | Backup command arguments are incomplete | 使用 node center/backup.js backup 数据目录 备份文件，或 restore 备份文件 新目录 / Use node center/backup.js backup DATA_DIR BACKUP_FILE, or restore BACKUP_FILE NEW_DIR. |
