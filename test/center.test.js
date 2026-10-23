@@ -58,6 +58,7 @@ test('center login, binding, private proxy, authorization and revocation', async
   const proxied = await fetch(`http://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: cookie } });
   assert.match(await proxied.text(), new RegExp(`/d/${device.id}/app.js`));
   assert.equal((await call(`/d/${device.id}/api/frp`)).status, 403);
+  assert.equal((await call(`/d/${device.id}/errors.js`)).status, 200);
   async function plugin(op, content) {
     return (await fetch('http://127.0.0.1:17702/', { method: 'POST', body: JSON.stringify({ op, content }) })).json();
   }
@@ -68,9 +69,41 @@ test('center login, binding, private proxy, authorization and revocation', async
   assert.equal((await plugin('NewProxy', proxy)).unchange, true);
   assert.equal((await plugin('NewProxy', { ...proxy, remote_port: device.port + 1 })).reject, true);
   const other = await call('/api/login', 'POST', { username: 'other', password: otherPassword });
+  const otherCookie = other.headers.get('set-cookie').split(';')[0];
   assert.equal((await call(`/d/${device.id}/api/sessions`, 'GET', null, { Cookie: other.headers.get('set-cookie').split(';')[0] })).status, 404);
   assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`, 'GET', null, { Cookie: other.headers.get('set-cookie').split(';')[0] })).status, 404);
   assert.equal((await call(`/d/${device.id}/apps/aimini/api/tasks`, 'POST', {}, { Origin: 'https://evil.test' })).status, 403);
+  for (const role of ['viewer', 'operator', 'terminal']) {
+    assert.equal((await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role })).status, 200);
+    const asOther = { Cookie: otherCookie };
+    const shared = (await call('/api/devices', 'GET', null, asOther)).data.devices[0];
+    assert.equal(shared.role, role); assert.equal(shared.heartbeat, true); assert.equal(shared.tunnel.state, 'ready');
+    assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`, 'GET', null, asOther)).status, 200);
+    assert.equal((await call(`/d/${device.id}/apps/aimini/api/tasks`, 'POST', {}, asOther)).status, role === 'viewer' ? 403 : 200);
+    assert.equal((await call(`/d/${device.id}/api/sessions`, 'GET', null, asOther)).status, role === 'terminal' ? 200 : 403);
+    assert.equal((await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'tester', role: 'terminal' }, asOther)).status, 404);
+    assert.equal((await call(`/api/devices/${device.id}`, 'DELETE', null, asOther)).status, 404);
+    assert.equal((await call(`/d/${device.id}/api/restart`, 'POST', {}, asOther)).status, 403);
+    if (role !== 'terminal') {
+      const forbiddenWs = new WebSocket(`ws://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: otherCookie, Origin: 'https://center.test' } });
+      const status = await new Promise((resolve, reject) => {
+        forbiddenWs.once('unexpected-response', (request, response) => { response.resume(); resolve(response.statusCode); request.destroy(); });
+        forbiddenWs.once('open', () => { forbiddenWs.terminate(); reject(new Error('unauthorized websocket opened')); });
+        forbiddenWs.on('error', () => {});
+      });
+      assert.equal(status, 403);
+    }
+  }
+  const sharedWs = new WebSocket(`ws://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: otherCookie, Origin: 'https://center.test' } });
+  await new Promise((resolve, reject) => { sharedWs.once('open', resolve); sharedWs.once('error', reject); });
+  const revoked = new Promise((resolve) => sharedWs.once('close', resolve));
+  await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'revoke' });
+  await revoked;
+  assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`, 'GET', null, { Cookie: otherCookie })).status, 404);
+  await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'viewer' });
+  const logout = await call(`/d/${device.id}/apps/aimini/api/logout`, 'POST', {}, { Cookie: otherCookie });
+  assert.equal(logout.status, 200); assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
+  assert.equal((await call('/api/me', 'GET', null, { Cookie: otherCookie })).status, 401);
   const ws = new WebSocket(`ws://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: cookie, Origin: 'https://center.test' } });
   await new Promise((resolve, reject) => { ws.once('open', resolve); ws.once('error', reject); });
   const echoed = new Promise((resolve) => ws.once('message', (message) => resolve(message.toString())));

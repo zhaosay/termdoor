@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { db, save, digest, random, passwordMatches, secretMatches } = require('./store');
 const { proxyHttp, proxyUpgrade } = require('./proxy');
+const { roleFor, canRequest } = require('./permissions');
 
 const centerUrl = new URL(process.env.TERMDOOR_CENTER_URL || 'https://center.example.com');
 if (centerUrl.protocol !== 'https:' || centerUrl.username || centerUrl.password || centerUrl.pathname !== '/' || centerUrl.search || centerUrl.hash || centerUrl.port) {
@@ -49,27 +50,38 @@ function deviceAuth(req) {
   return db.devices.find((d) => secretMatches(token, d.secretHash));
 }
 function sameOrigin(req) { return req.headers.origin === origin; }
-function closeDevice(id) {
-  for (const [socket, meta] of liveSockets) if (meta.device === id) socket.destroy();
+function closeDevice(id, userId) {
+  for (const [socket, meta] of liveSockets) if (meta.device === id && (!userId || meta.owner === userId)) socket.destroy();
 }
 function active(device) { return Date.now() - (device.lastSeen || 0) < 45000; }
+const healthChecks = new Map();
+async function tunnelHealth(device) {
+  if (!active(device)) return { state: 'offline', checkedAt: Date.now() };
+  const existing = healthChecks.get(device.id);
+  if (existing && Date.now() - existing.started < 5000) return existing.promise;
+  const started = Date.now();
+  const promise = (async () => {
+    try {
+      const url = new URL(`http://127.0.0.1:${device.port}/api/sessions`);
+      url.searchParams.set('token', device.token); url.searchParams.set('key', device.key);
+      const response = await fetch(url, { signal: AbortSignal.timeout(5000) });
+      await response.body?.cancel();
+      return { state: response.ok ? 'ready' : 'blocked', latencyMs: Date.now() - started, checkedAt: Date.now() };
+    } catch { return { state: 'unavailable', checkedAt: Date.now() }; }
+  })();
+  healthChecks.set(device.id, { started, promise });
+  return promise;
+}
 async function available(device) {
-  if (!active(device)) return false;
-  try {
-    const url = new URL(`http://127.0.0.1:${device.port}/api/sessions`);
-    url.searchParams.set('token', device.token);
-    url.searchParams.set('key', device.key);
-    const result = await fetch(url, { signal: AbortSignal.timeout(2000) });
-    return result.ok;
-  } catch { return false; }
+  return (await tunnelHealth(device)).state === 'ready';
 }
 function terminalRoute(req, user) {
   const match = /^\/d\/([a-f0-9]{24})(\/.*)$/.exec(req.url);
   if (!match) return null;
-  const device = db.devices.find((d) => d.id === match[1] && d.owner === user.userId);
-  return device ? { device, pathname: match[2] } : null;
+  const device = db.devices.find((d) => d.id === match[1] && roleFor(d, user.userId));
+  return device ? { device, role: roleFor(device, user.userId), pathname: match[2] } : null;
 }
-const permitted = new Set(['/', '/index.html', '/app.js', '/token.js', '/helpers.js', '/upload.js', '/frp.js', '/online.js', '/base.js', '/termdoor.css', '/theme-init.js', '/icon-192.png', '/icon-512.png', '/api/name', '/api/version', '/api/sessions', '/api/connections', '/api/quick-commands', '/api/upload']);
+const permitted = new Set(['/', '/index.html', '/app.js', '/errors.js', '/token.js', '/helpers.js', '/upload.js', '/frp.js', '/online.js', '/base.js', '/termdoor.css', '/theme-init.js', '/icon-192.png', '/icon-512.png', '/api/name', '/api/version', '/api/sessions', '/api/connections', '/api/quick-commands', '/api/upload']);
 function allowed(pathname) {
   return permitted.has(pathname) || /^\/vendor\/[a-zA-Z0-9.-]+$/.test(pathname) || /^\/apps\/[a-z][a-z0-9-]{0,31}\//.test(pathname);
 }
@@ -97,7 +109,7 @@ async function handle(req, res) {
     if (!device) return json(res, 401, { error: '设备已解绑' });
     const input = await body(req);
     device.lastSeen = Date.now();
-    device.apps = Array.isArray(input.apps) ? input.apps.slice(0, 10).filter((a) => a && /^[a-z][a-z0-9-]{0,31}$/.test(a.id) && typeof a.name === 'string').map(({ id, name }) => ({ id, name: name.slice(0, 40) })) : [];
+    device.apps = Array.isArray(input.apps) ? input.apps.slice(0, 10).filter((a) => a && /^[a-z][a-z0-9-]{0,31}$/.test(a.id) && typeof a.name === 'string').map(({ id, name, health }) => ({ id, name: name.slice(0, 40), health: { state: ['ready', 'credentials', 'unavailable', 'disabled'].includes(health?.state) ? health.state : 'unknown' } })) : [];
     if (/^[a-f0-9]{32}$/.test(input.token || '') && /^[A-Za-z0-9_-]{8,128}$/.test(input.key || '')) {
       device.token = input.token;
       device.key = input.key;
@@ -125,8 +137,8 @@ async function handle(req, res) {
     sessions.set(digest(token), { userId: user.id, username: user.username, expires: now + TTL });
     return json(res, 200, { username: user.username }, { 'Set-Cookie': `td_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${TTL / 1000}` });
   }
-  if (['/', '/setup', '/setup.html', '/setup.js', '/setup.css', '/errors.js', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
-    const filename = url.pathname === '/' ? 'index.html' : ['/setup', '/setup.html'].includes(url.pathname) ? 'setup.html' : url.pathname.slice(1);
+  if (['/', '/launch', '/launch.js', '/setup', '/setup.html', '/setup.js', '/setup.css', '/errors.js', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
+    const filename = url.pathname === '/' ? 'index.html' : url.pathname === '/launch' ? 'launch.html' : ['/setup', '/setup.html'].includes(url.pathname) ? 'setup.html' : url.pathname.slice(1);
     const target = filename === 'errors.js' ? path.join(__dirname, '../public/errors.js') : filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : filename === 'setup.css' ? path.join(__dirname, '../public/online-page.css') : path.join(__dirname, 'public', filename);
     const type = filename.endsWith('.html') ? 'text/html' : filename.endsWith('.css') ? 'text/css' : 'application/javascript';
     res.writeHead(200, { ...headers, 'Content-Type': `${type}; charset=utf-8` });
@@ -134,7 +146,7 @@ async function handle(req, res) {
   }
   const user = session(req);
   if (!user) {
-    if (url.pathname.startsWith('/d/') && req.method === 'GET' && !req.headers.upgrade) {
+    if (url.pathname.startsWith('/d/') && req.method === 'GET' && !req.headers.upgrade && !url.pathname.includes('/api/')) {
       res.writeHead(302, { ...headers, Location: '/' }); return res.end();
     }
     return json(res, 401, { error: '请先登录' });
@@ -158,8 +170,26 @@ async function handle(req, res) {
     return json(res, 200, { ok: true });
   }
   if (url.pathname === '/api/devices' && req.method === 'GET') {
-    const devices = await Promise.all(db.devices.filter((d) => d.owner === user.userId).map(async (d) => ({ id: d.id, name: d.name, enrollmentId: d.enrollmentId, lastSeen: d.lastSeen, apps: d.apps || [], online: await available(d) })));
+    const devices = await Promise.all(db.devices.filter((d) => roleFor(d, user.userId)).map(async (d) => {
+      const tunnel = await tunnelHealth(d);
+      return { id: d.id, name: d.name, enrollmentId: d.enrollmentId, lastSeen: d.lastSeen, apps: d.apps || [],
+        role: roleFor(d, user.userId), heartbeat: active(d), tunnel, online: tunnel.state === 'ready' };
+    }));
     return json(res, 200, { devices });
+  }
+  const grantsRoute = /^\/api\/devices\/([a-f0-9]{24})\/grants$/.exec(url.pathname);
+  if (grantsRoute) {
+    const device = db.devices.find((d) => d.id === grantsRoute[1] && d.owner === user.userId);
+    if (!device) return json(res, 404, { error: '设备不存在' });
+    if (req.method === 'GET') return json(res, 200, { grants: (device.grants || []).map((g) => ({ username: db.users.find((u) => u.id === g.userId)?.username || '', role: g.role })) });
+    if (req.method !== 'POST') return json(res, 405, { error: 'method not allowed' });
+    const input = await body(req);
+    const account = db.users.find((u) => u.username === input.username && u.id !== device.owner);
+    if (!account || !['viewer', 'operator', 'terminal', 'revoke'].includes(input.role)) return json(res, 400, { error: 'invalid grant' });
+    device.grants = (device.grants || []).filter((g) => g.userId !== account.id);
+    if (input.role !== 'revoke') device.grants.push({ userId: account.id, role: input.role });
+    closeDevice(device.id, account.id); save();
+    return json(res, 200, { ok: true });
   }
   if (url.pathname === '/api/invites' && req.method === 'POST') {
     db.invites = db.invites.filter((i) => i.expires > Date.now());
@@ -174,13 +204,19 @@ async function handle(req, res) {
   if (removal && req.method === 'DELETE') {
     const device = db.devices.find((d) => d.id === removal[1] && d.owner === user.userId);
     if (!device) return json(res, 404, { error: '设备不存在' });
-    closeDevice(device.id);
+    closeDevice(device.id); healthChecks.delete(device.id);
     db.devices = db.devices.filter((d) => d !== device); save();
     return json(res, 200, { ok: true });
   }
   const terminal = terminalRoute(req, user);
   if (terminal) {
     const endpoint = new URL(terminal.pathname, origin).pathname;
+    if (!canRequest(terminal.role, endpoint, req.method)) return json(res, 403, { error: 'permission denied' });
+    if (/^\/apps\/[a-z][a-z0-9-]{0,31}\/api\/logout$/.test(endpoint) && req.method === 'POST') {
+      sessions.delete(user.hash);
+      for (const [socket, meta] of liveSockets) if (meta.session === user.hash) socket.destroy();
+      return json(res, 200, { ok: true, redirect: '/' }, { 'Set-Cookie': 'td_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0' });
+    }
     if (endpoint === '/api/auth-status') return json(res, 200, { enabled: false });
     if (endpoint === '/api/share') {
       const link = `${origin}/d/${terminal.device.id}/?token=center`;
@@ -199,7 +235,7 @@ server.on('error', (err) => { cli.report(err, { fatal: true }); process.exit(1);
 server.on('upgrade', (req, socket, head) => {
   const user = session(req);
   const terminal = user && terminalRoute(req, user);
-  if (!terminal || !sameOrigin(req) || new URL(terminal.pathname, origin).pathname !== '/') {
+  if (!terminal || !['owner', 'terminal'].includes(terminal.role) || !sameOrigin(req) || new URL(terminal.pathname, origin).pathname !== '/') {
     socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return;
   }
   proxyUpgrade(req, socket, head, terminal.device, terminal.pathname, origin, (connection) => {

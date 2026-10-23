@@ -315,6 +315,7 @@
       const serviceActionStatus = document.getElementById('service-action-status');
       const updateBtn = document.getElementById('update-btn');
       const restartBtn = document.getElementById('restart-btn');
+      let serviceExpectedInstance;
 
       // The server that answers this POST is the one about to be killed and
       // replaced, so there's no live channel back with a "how did it go".
@@ -326,8 +327,10 @@
         let attempts = 0;
         const poll = setInterval(() => {
           attempts += 1;
-          terminalFetch('/api/version').then((r) => {
+          terminalFetch('/api/version').then(async (r) => {
             if (!r.ok) throw new Error('not ready');
+            const info = await r.json();
+            if (info.instanceId === serviceExpectedInstance) throw new Error('waiting for new process');
             clearInterval(poll);
             serviceActionStatus.textContent = '已恢复，正在刷新…';
             setTimeout(() => location.reload(), 400);
@@ -340,11 +343,17 @@
         }, 1500);
       }
 
-      function triggerServiceAction(btn, path, label) {
+      async function triggerServiceAction(btn, path, label) {
+        let state;
+        try {
+          state = await terminalFetch(`/api/service-state?${authQuery}`).then(terminalJson);
+          serviceExpectedInstance = state.instanceId;
+          if (!confirm(`当前有 ${state.sessions} 个终端会话、${state.connections} 个连接。${label}将关闭这些会话。请先保存工作，是否继续？`)) return;
+        } catch (error) { serviceActionStatus.textContent = TermDoorErrors.format(error); return; }
         updateBtn.disabled = true;
         restartBtn.disabled = true;
         serviceActionStatus.textContent = `正在${label}…`;
-        terminalFetch(`${path}?${authQuery}`, { method: 'POST' })
+        terminalFetch(`${path}?${authQuery}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state) })
           .then(async (r) => {
             await terminalJson(r);
             // Give the detached script a moment to actually stop the old
@@ -357,6 +366,14 @@
             updateBtn.disabled = false;
             restartBtn.disabled = false;
           });
+      }
+      document.getElementById('applications-btn').onclick = () => {
+        try { sessionStorage.setItem('webcli-enrollment-auth', authQuery); } catch {}
+        location.assign('/applications.html');
+      };
+      if (TERMDoorBase) {
+        updateBtn.hidden = true; restartBtn.hidden = true;
+        document.getElementById('applications-btn').hidden = true;
       }
       updateBtn.addEventListener('click', () => triggerServiceAction(updateBtn, '/api/update', '更新代码'));
       restartBtn.addEventListener('click', () => triggerServiceAction(restartBtn, '/api/restart', '重启服务'));
@@ -518,6 +535,19 @@
         }
         const session = currentSession();
         if (!session) return;
+        if (btn.dataset.key === 'keyboard') return session.term.focus();
+        if (btn.dataset.key === 'copy') {
+          const text = session.term.getSelection();
+          if (text) copyText(text).catch(showTermDoorError);
+          return;
+        }
+        if (btn.dataset.key === 'paste') {
+          const clipboard = navigator.clipboard?.readText ? navigator.clipboard.readText() : Promise.resolve(prompt('粘贴文本 / Paste text'));
+          clipboard.then((text) => {
+            if (text && confirm(`粘贴到终端？ / Paste into terminal?\n${text.slice(0, 160)}`)) session.term.paste(text);
+          }).catch(showTermDoorError);
+          return;
+        }
         const seq = MOBILE_KEY_SEQ[btn.dataset.key];
         if (seq) sendInput(session, seq);
       });
@@ -574,10 +604,11 @@
         ws.binaryType = 'arraybuffer';
         session.ws = ws;
 
-        const setDot = (state) => { session.dot.className = `tab-dot ${state}`; };
+        const setDot = (state) => { session.dot.className = `tab-dot ${state}`; session.dot.title = state === 'connected' ? '已连接 / Connected' : '连接已断开 / Disconnected'; session.dot.setAttribute('aria-label', session.dot.title); };
 
         ws.onopen = () => {
           setDot('connected');
+          if (session.id === activeId) document.getElementById('connection-feedback').hidden = true;
           const wasReconnect = session.reconnectAttempts > 0;
           session.reconnectAttempts = 0;
           // Resolved in the 'hello' handler below, once we know whether the
@@ -647,6 +678,13 @@
           }
           const delay = Math.min(1000 * 2 ** session.reconnectAttempts, 10000);
           session.reconnectAttempts += 1;
+          session.dot.title = `重连第 ${session.reconnectAttempts} 次 · ${Math.round(delay / 1000)} 秒后重试 / Reconnect attempt ${session.reconnectAttempts}`;
+          session.dot.setAttribute('aria-label', session.dot.title);
+          session.retryMessage = session.dot.title;
+          if (sessions.get(activeId) === session) {
+            document.getElementById('connection-feedback').hidden = false;
+            document.getElementById('connection-retries').textContent = session.retryMessage;
+          }
           session.reconnectTimer = setTimeout(() => {
             if (!session.closing) connectWs(session);
           }, delay);
@@ -661,6 +699,8 @@
         panesEl.querySelectorAll('.pane').forEach((p) => p.classList.toggle('active', p.dataset.id === String(id)));
         tabsEl.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.id === String(id)));
         const session = sessions.get(id);
+        document.getElementById('connection-feedback').hidden = !session || session.ws?.readyState === WebSocket.OPEN;
+        document.getElementById('connection-retries').textContent = session?.retryMessage || '正在连接 / Connecting';
         if (session) {
           session.fitAddon.fit();
           session.term.focus();
@@ -839,6 +879,11 @@
       }
 
       newTabBtn.addEventListener('click', () => createSession());
+      document.getElementById('connection-retry').onclick = () => {
+        const session = currentSession();
+        if (!session || session.ws?.readyState === WebSocket.OPEN || session.ws?.readyState === WebSocket.CONNECTING) return;
+        clearTimeout(session.reconnectTimer); connectWs(session);
+      };
 
       // Debounced: mobile browsers can fire several resize/visualViewport
       // events in quick succession (address bar show/hide, keyboard open/close),

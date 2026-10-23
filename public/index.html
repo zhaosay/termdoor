@@ -90,6 +90,7 @@
           <div class="action-row">
             <button type="button" id="update-btn">更新代码</button>
             <button type="button" id="restart-btn">重启服务</button>
+            <button type="button" id="applications-btn">应用与维护</button>
           </div>
           <div id="service-action-status" class="settings-meta"></div>
           <div id="frp-row" hidden>
@@ -111,6 +112,7 @@
       <div id="tabs"></div>
       <button id="new-tab-btn" type="button" title="New terminal" aria-label="New terminal"><i data-i="plus"></i></button>
     </div>
+    <div id="connection-feedback" role="status" aria-live="polite" hidden><span id="connection-retries"></span><button id="connection-retry" type="button">立即重试 / Retry</button></div>
     <div id="quickcmd-widget" class="chrome-dropdown-anchor">
         <button id="quickcmd-toggle" type="button" title="快捷命令">命令</button>
         <div id="quickcmd-panel">
@@ -120,6 +122,9 @@
         </div>
       </div>
     <div id="mobile-keys">
+      <button type="button" data-key="keyboard">键盘</button>
+      <button type="button" data-key="copy">复制</button>
+      <button type="button" data-key="paste">粘贴</button>
       <button type="button" data-key="esc">Esc</button>
       <button type="button" data-key="tab">Tab</button>
       <button type="button" data-sticky="ctrl">Ctrl</button>

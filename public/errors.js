@@ -3,6 +3,13 @@
   else root.TermDoorErrors = factory();
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const catalog = [
+    {"code":"TD-UPDATE-003","key":"update has local changes","zh":"本机有未保存到 Git 的改动，更新已停止","en":"Update stopped because this checkout has local changes","hint":"先提交或备份本机改动 / Commit or back up local changes first."},
+    {"code": "TD-APP-004", "key": "invalid app configuration", "zh": "应用配置无效", "en": "Invalid application configuration", "hint": "检查名称、端口和密钥文件路径 / Check name, port and key file path."},
+    {"code": "TD-APP-005", "key": "application limit", "zh": "应用数量已达上限", "en": "Application limit reached", "hint": "最多配置 10 个应用 / Configure up to 10 applications."},
+    {"code": "TD-PERM-001", "key": "permission denied", "zh": "当前权限不允许此操作", "en": "Your permission does not allow this action", "hint": "请联系设备所有者 / Contact the device owner."},
+    {"code": "TD-PERM-002", "key": "invalid grant", "zh": "账号或权限无效", "en": "Invalid account or permission", "hint": "填写已有中心账号，并选择权限 / Enter an existing center account and choose a permission."},
+    {"code": "TD-UPDATE-001", "key": "sessions changed", "zh": "终端会话已变化，请重新确认", "en": "Terminal sessions changed; confirm again", "hint": "重新查看会话数量后重试 / Check session count and retry."},
+    {"code": "TD-UPDATE-002", "key": "version check failed", "zh": "无法检查最新版本", "en": "Unable to check latest version", "hint": "检查网络后重试 / Check network and retry."},
     {"code": "TD-AUTH-001", "key": "invalid token", "zh": "本机访问令牌无效", "en": "Invalid local access token", "hint": "请使用本机最新访问链接 / Use the latest local access link."},
     {"code": "TD-AUTH-002", "key": "invalid key", "zh": "本机二次密钥无效", "en": "Invalid local secondary key", "hint": "运行 auth.sh status 或 auth.bat status / Run auth.sh status or auth.bat status."},
     {"code": "TD-AUTH-003", "key": "too many attempts", "zh": "验证次数过多", "en": "Too many authentication attempts", "hint": "等待五分钟再试 / Wait five minutes and retry."},

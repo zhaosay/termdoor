@@ -16,7 +16,7 @@
       <form id="login-form" class="panel"><h2>登录 TermDoor</h2><label>中心账号<input name="username" autocomplete="username" required maxlength="40"></label><label>中心密码<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button class="primary" type="submit">登录</button></form>
     </section>
     <section id="dashboard" hidden>
-      <div class="heading"><div><p class="eyebrow">你的工作空间</p><h1>我的设备</h1><p id="summary">正在检查设备状态…</p></div><button id="bind" class="primary">设备接入</button></div>
+      <div class="heading"><div><p class="eyebrow">你的工作空间</p><h1>我的设备</h1><p id="summary">正在检查设备状态…</p></div><button id="refresh-devices">刷新状态</button><button id="bind" class="primary">设备接入</button></div>
       <div id="devices" aria-live="polite"></div>
       <div id="empty" class="panel" hidden><h2>接入第一台电脑</h2><p>前往「设备接入」页面，按步骤生成设备接入码并接入电脑。</p></div>
     </section>
@@ -24,5 +24,6 @@
     <p id="message" role="status" aria-live="polite"></p>
   </main>
   <dialog id="password-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>修改密码</h2><form id="password-form"><label>当前密码<input name="current" type="password" autocomplete="current-password" required maxlength="256"></label><label>新密码<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><p>至少 12 个字符。修改后需要重新登录。</p><button class="primary" type="submit">保存密码</button></form><p id="password-message" role="status"></p></dialog>
+  <dialog id="grant-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2 id="grant-title">访问权限</h2><p>只读：查看应用；应用操作：可调度任务；终端控制：还可执行电脑命令。</p><p>只授权已有的中心账号。撤销立即阻止新请求并断开终端连接。</p><ul id="grants"></ul><form id="grant-form"><label>中心账号<input name="username" required maxlength="40" autocomplete="off"></label><label>权限<select name="role" id="grant-role"><option value="viewer">只读查看</option><option value="operator">应用操作</option><option value="terminal">终端控制</option></select></label><button class="primary">保存权限</button></form><p id="grant-message" role="status"></p></dialog>
 </body>
 </html>

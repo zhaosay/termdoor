@@ -17,6 +17,7 @@ test('application gateway confines targets and keeps credentials on the device',
     observed = { headers: req.headers, url: req.url, body };
     res.setHeader('Set-Cookie', 'aimini_session=private');
     if (req.url === '/') { res.setHeader('Content-Type', 'text/html'); res.end('<script src="/static/app.js"></script>'); }
+    else if (req.url === '/static/app.js') { res.setHeader('Content-Type', 'application/javascript'); res.end('console.log("application")'); }
     else { res.setHeader('Content-Type', 'application/json'); res.end('{"ok":true}'); }
   });
   await new Promise((r) => hub.listen(0, '127.0.0.1', r));
@@ -41,12 +42,17 @@ test('application gateway confines targets and keeps credentials on the device',
   assert.equal(action.status, 200);
   assert.equal(action.headers.get('content-encoding'), 'gzip');
   assert.deepEqual(await action.json(), { ok: true });
+  assert.equal(action.headers.get('cache-control'), 'no-store');
   assert.equal(observed.url, '/api/tasks');
   assert.equal(observed.body, '{"template":"project_check"}');
   assert.equal(observed.headers.origin, 'http://aimini.gateway.invalid');
   assert.equal(observed.headers['x-aimini-request'], '1');
   assert.equal(observed.headers.authorization, undefined);
   assert.ok(!JSON.stringify(observed).includes('browser-secret'));
+  const asset = await fetch(base + '/apps/aimini/static/app.js');
+  assert.equal(asset.headers.get('cache-control'), 'private, max-age=300');
+  assert.equal(asset.headers.get('content-encoding'), 'gzip');
+  assert.match(await asset.text(), /application/);
   assert.equal((await fetch(base + '/apps/unconfigured/')).status, 404);
   fs.unlinkSync(keyFile);
   assert.equal((await fetch(base + '/apps/aimini/')).status, 503);

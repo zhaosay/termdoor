@@ -42,3 +42,7 @@ dialog::backdrop{background:rgb(0 0 0 / .65)}
 @media(max-width:680px){header{padding:var(--zh-space-4)}.brand span{display:none}main{padding:var(--zh-space-8) var(--zh-space-4)}#login{grid-template-columns:1fr;gap:var(--zh-space-6);min-height:auto}.heading{align-items:flex-start;flex-direction:column}.device{grid-template-columns:3ch minmax(0,1fr);align-items:start}.device-actions{grid-column:2;justify-self:start}.panel{padding:var(--zh-space-6)}h1{font-size:2.8rem}}
 
 #message, #password-message { white-space: pre-line; overflow-wrap: anywhere; }
+
+.device-layers{min-height:1.5em;color:var(--zh-text-secondary,#bcc8d9);font-size:13px}.device-actions{align-items:stretch}.launch-stages{line-height:2.5;font-weight:700}#grants{list-style:none;padding:0}#grants li{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #485366}dialog select{width:100%;padding:12px;background:#171c24;color:#fff;border:1px solid #63738a;border-radius:8px}dialog{max-width:min(560px,calc(100vw - 32px))}#grant-form{display:grid;gap:16px}
+
+.device-actions{grid-template-columns:7.5em 8em 9em}.device-actions>button{align-self:start;min-height:44px}@media(max-width:680px){.device-actions{grid-template-columns:minmax(100px,1fr) minmax(100px,1fr);width:100%}.device-actions .device-open-slot{grid-column:1/-1;grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}}

@@ -1,5 +1,6 @@
 const http = require('http');
 const errors = require('../public/errors');
+const zlib = require('zlib');
 
 function targetRequest(req, device, pathname, publicOrigin) {
   const url = new URL(pathname, 'http://localhost');
@@ -8,7 +9,7 @@ function targetRequest(req, device, pathname, publicOrigin) {
   const headers = { ...req.headers, host: new URL(publicOrigin).host, 'accept-encoding': url.pathname.startsWith('/apps/') ? (req.headers['accept-encoding'] || 'identity') : 'identity' };
   delete headers.cookie;
   delete headers.authorization;
-  delete headers['if-none-match'];
+  if (!/\.(js|css|png|svg|woff2?)(?:\?|$)/.test(pathname)) delete headers['if-none-match'];
   delete headers['if-modified-since'];
   delete headers['x-forwarded-host'];
   return { host: '127.0.0.1', port: device.port, path: url.pathname + url.search, method: req.method, headers };
@@ -18,9 +19,10 @@ function proxyHttp(req, res, device, pathname, publicOrigin) {
   const base = `/d/${device.id}`;
   const options = targetRequest(req, device, pathname, publicOrigin);
   const upstream = http.request(options, (response) => {
-    const headers = { ...response.headers, 'cache-control': 'no-store' };
+    const staticAsset = ['GET', 'HEAD'].includes(req.method) && /\.(js|css|png|svg|woff2?)(?:\?|$)/.test(pathname) && [200, 304].includes(response.statusCode) && (response.statusCode === 304 || /^(application\/(javascript|x-javascript)|text\/(css|javascript)|image\/|font\/)/.test(response.headers['content-type'] || ''));
+    const headers = { ...response.headers, 'cache-control': staticAsset ? 'private, max-age=300' : 'no-store' };
     delete headers['set-cookie'];
-    delete headers.etag;
+    if (!staticAsset) delete headers.etag;
     delete headers['content-length'];
     if ((response.headers['content-type'] || '').includes('text/html')) {
       delete headers['content-encoding'];
@@ -32,8 +34,11 @@ function proxyHttp(req, res, device, pathname, publicOrigin) {
         res.end(html);
       });
     } else {
-      res.writeHead(response.statusCode, headers);
-      response.pipe(res);
+      if (req.method !== 'HEAD' && response.statusCode !== 304 && !headers['content-encoding'] && /\bgzip\b/.test(req.headers['accept-encoding'] || '') && /^(text\/|application\/(javascript|json))/.test(headers['content-type'] || '')) {
+        headers['content-encoding'] = 'gzip'; headers.vary = 'Accept-Encoding';
+        res.writeHead(response.statusCode, headers);
+        const gzip = zlib.createGzip(); gzip.on('error', () => res.destroy()); response.pipe(gzip).pipe(res);
+      } else { res.writeHead(response.statusCode, headers); response.pipe(res); }
     }
     response.on('error', () => res.destroy());
   });

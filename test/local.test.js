@@ -47,6 +47,13 @@ test('LAN terminal and local-only management remain protected', async (t) => {
   assert.equal((await fetch(`http://localhost:17704/api/online?token=${token}&key=${'b'.repeat(32)}`)).status, 403);
   assert.equal((await fetch(`http://localhost:17704/api/sessions?token=${token}`)).status, 401);
   assert.equal((await fetch(`http://localhost:17704/api/sessions?token=${token}&key=${'b'.repeat(32)}`)).status, 200);
+  assert.equal((await get('/applications.html')).status, 200);
+  assert.equal((await get(`/api/apps?token=${token}`)).status, 200);
+  assert.equal((await fetch(`http://localhost:17704/api/apps?token=${token}&key=${'b'.repeat(32)}`)).status, 403);
+  const report = await (await get(`/api/diagnostics?token=${token}`)).json();
+  for (const sensitive of [token.trim(), temporary, 'b'.repeat(32), '127.0.0.1']) assert.ok(!JSON.stringify(report).includes(sensitive));
+  const restart = await get(`/api/restart?token=${token}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(restart.status, 409); assert.equal((await restart.json()).errorCode, 'TD-UPDATE-001');
   const frpEndpoint = `/api/frp?token=${token}`;
   for (const field of ['serverAddr', 'token', 'proxyName']) {
     const input = { serverAddr: 'frp.example.com', serverPort: 7000, remotePort: 6050, proxyName: 'test', token: 'abcdefgh12345678' };

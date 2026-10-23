@@ -29,6 +29,7 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
       require: (id) => {
         if (id === './config') return { DATA_DIR: data, SECONDARY_KEY_FILE: path.join(data, 'secondary-key.txt') };
         if (id === './auth') return { TOKEN: 'a'.repeat(32), loadName: () => 'new computer' };
+        if (id === './app-registry') return { read: () => [], probe: async () => ({ state: 'ready' }) };
         if (id === './app-proxy') return { listApps: () => [{ id: 'aimini', name: 'aimini' }] };
         if (id === 'child_process') return {
           execFile: (file, args, callback) => callback(null, '0.71.0'),
