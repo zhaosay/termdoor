@@ -31,7 +31,9 @@ async function refresh() {
     const info = document.createElement('div');
     const title = document.createElement('h2'); title.textContent = device.name;
     const status = document.createElement('p'); status.className = device.online ? 'online' : 'offline';
-    status.textContent = device.online ? '在线' : device.lastSeen ? `离线 · 最近连接 ${new Date(device.lastSeen).toLocaleString()}` : '等待设备连接';
+    const diagnosis = TermDoorDeviceStatus.describe(device);
+    status.textContent = diagnosis.label;
+    status.title = diagnosis.key ? TermDoorErrors.format(diagnosis.key) : '';
     const layers = document.createElement('p'); layers.className = 'device-layers';
     layers.textContent = `设备 ${device.heartbeat ? '已通信' : '未通信'} · 通路 ${device.online ? '可用' : '待恢复'}${device.tunnel?.latencyMs != null ? ` · ${device.tunnel.latencyMs} ms` : ''}`;
     info.append(title, status, layers);

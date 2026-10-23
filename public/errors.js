@@ -3,6 +3,12 @@
   else root.TermDoorErrors = factory();
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const catalog = [
+    {"code":"TD-CONNECT-001","key":"device heartbeat offline","zh":"设备未通信","en":"Device is not reporting","hint":"在目标电脑启动 TermDoor，再点重新检查 / Start TermDoor on the target computer and retry."},
+    {"code":"TD-CONNECT-002","key":"device tunnel blocked","zh":"通路验证失败","en":"Tunnel authentication failed","hint":"在目标电脑打开设备接入页，检查本机凭据 / Open Device enrollment on the target computer and check local credentials."},
+    {"code":"TD-CONNECT-003","key":"device tunnel unavailable","zh":"通路未连通","en":"Tunnel is unavailable","hint":"在目标电脑的设备接入页检查网络与连接状态，再重试 / Check network and tunnel status on the target computer, then retry."},
+    {"code":"TD-CONNECT-004","key":"application disabled","zh":"应用未启用","en":"Application is not enabled","hint":"在目标电脑的应用与维护页启用应用 / Enable the application in Applications and maintenance on the target computer."},
+    {"code":"TD-CONNECT-005","key":"application credentials unavailable","zh":"应用访问密钥不可用","en":"Application access key is unavailable","hint":"在目标电脑的应用与维护页检查密钥文件 / Check the key file in Applications and maintenance on the target computer."},
+    {"code":"TD-CONNECT-006","key":"application service unavailable","zh":"应用服务未就绪","en":"Application service is not ready","hint":"在目标电脑启动应用并测试连接 / Start the application on the target computer and test its connection."},
     {"code":"TD-UPDATE-003","key":"update has local changes","zh":"本机有未保存到 Git 的改动，更新已停止","en":"Update stopped because this checkout has local changes","hint":"先提交或备份本机改动 / Commit or back up local changes first."},
     {"code": "TD-APP-004", "key": "invalid app configuration", "zh": "应用配置无效", "en": "Invalid application configuration", "hint": "检查名称、端口和密钥文件路径 / Check name, port and key file path."},
     {"code": "TD-APP-005", "key": "application limit", "zh": "应用数量已达上限", "en": "Application limit reached", "hint": "最多配置 10 个应用 / Configure up to 10 applications."},
@@ -57,7 +63,7 @@
     {"code": "TD-CENTER-007", "key": "尝试次数过多，请 5 分钟后重试", "zh": "登录尝试次数过多", "en": "Too many login attempts", "hint": "五分钟后重试 / Retry in five minutes."},
     {"code": "TD-CENTER-008", "key": "用户名或密码错误", "zh": "中心账号或密码错误", "en": "Incorrect center account or password", "hint": "确认账号密码或联系管理员 / Check your credentials or contact the administrator."},
     {"code": "TD-CENTER-009", "key": "请先登录", "zh": "请先登录中心", "en": "Sign in to the center first", "hint": "使用中心账号与密码登录 / Sign in with your center account and password."},
-    {"code": "TD-CENTER-010", "key": "新密码需要 12 到 256 个字符", "zh": "新密码需要 12 到 256 个字符", "en": "Password must contain 12 to 256 characters", "hint": "调整密码长度后重试 / Adjust password length and retry."},
+    {"code": "TD-CENTER-010", "key": "新密码需要 10 到 256 个字符", "zh": "新密码需要 10 到 256 个字符", "en": "Password must contain 10 to 256 characters", "hint": "调整密码长度后重试 / Adjust password length and retry."},
     {"code": "TD-CENTER-011", "key": "当前密码错误", "zh": "当前中心密码错误", "en": "Incorrect current center password", "hint": "检查当前密码后重试 / Check the current password and retry."},
     {"code": "TD-CENTER-012", "key": "有效设备接入码过多，请使用已有接入码或等待过期后再生成", "zh": "有效设备接入码过多", "en": "Too many active enrollment codes", "hint": "使用已有接入码或等待过期 / Use an existing code or wait for expiry."},
     {"code": "TD-CENTER-013", "key": "设备不存在", "zh": "设备不存在或不可访问", "en": "Device not found or inaccessible", "hint": "返回设备列表重新选择 / Return to the device list and select again."},

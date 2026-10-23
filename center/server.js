@@ -131,13 +131,13 @@ async function handle(req, res) {
     const candidate = typeof input.password === 'string' && input.password.length <= 256 ? input.password : '';
     const hash = user ? user.password : db.users[0]?.password;
     const matches = hash ? await passwordMatches(candidate, hash) : false;
-    if (!user || !matches) return json(res, 401, { error: '用户名或密码错误' });
+    if (!user || !matches || user.password !== hash) return json(res, 401, { error: '用户名或密码错误' });
     failures.delete(ip);
     const token = random();
     sessions.set(digest(token), { userId: user.id, username: user.username, expires: now + TTL });
     return json(res, 200, { username: user.username }, { 'Set-Cookie': `td_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${TTL / 1000}` });
   }
-  if (['/', '/launch', '/launch.js', '/setup', '/setup.html', '/setup.js', '/setup.css', '/errors.js', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
+  if (['/', '/launch', '/launch.js', '/device-status.js', '/setup', '/setup.html', '/setup.js', '/setup.css', '/errors.js', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
     const filename = url.pathname === '/' ? 'index.html' : url.pathname === '/launch' ? 'launch.html' : ['/setup', '/setup.html'].includes(url.pathname) ? 'setup.html' : url.pathname.slice(1);
     const target = filename === 'errors.js' ? path.join(__dirname, '../public/errors.js') : filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : filename === 'setup.css' ? path.join(__dirname, '../public/online-page.css') : path.join(__dirname, 'public', filename);
     const type = filename.endsWith('.html') ? 'text/html' : filename.endsWith('.css') ? 'text/css' : 'application/javascript';
@@ -161,9 +161,12 @@ async function handle(req, res) {
   if (url.pathname === '/api/password' && req.method === 'POST') {
     const input = await body(req);
     const account = db.users.find((u) => u.id === user.userId);
-    if (typeof input.password !== 'string' || input.password.length < 12 || input.password.length > 256) return json(res, 400, { error: '新密码需要 12 到 256 个字符' });
-    if (!await passwordMatches(String(input.current || '').slice(0, 256), account.password)) return json(res, 401, { error: '当前密码错误' });
-    account.password = await require('./store').passwordHash(input.password);
+    if (typeof input.password !== 'string' || input.password.length < 10 || input.password.length > 256) return json(res, 400, { error: '新密码需要 10 到 256 个字符' });
+    const currentHash = account.password;
+    if (!await passwordMatches(String(input.current || '').slice(0, 256), currentHash) || account.password !== currentHash) return json(res, 401, { error: '当前密码错误' });
+    const nextHash = await require('./store').passwordHash(input.password);
+    if (account.password !== currentHash) return json(res, 401, { error: '当前密码错误' });
+    account.password = nextHash;
     save();
     for (const [hash, item] of sessions) if (item.userId === user.userId) sessions.delete(hash);
     for (const [socket, meta] of liveSockets) if (meta.owner === user.userId) socket.destroy();
@@ -239,8 +242,12 @@ server.on('upgrade', (req, socket, head) => {
     socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); return;
   }
   proxyUpgrade(req, socket, head, terminal.device, terminal.pathname, origin, (connection) => {
+    const currentUser = session(req);
+    const currentDevice = db.devices.find((d) => d.id === terminal.device.id);
+    if (!currentUser || !currentDevice || !['owner', 'terminal'].includes(roleFor(currentDevice, currentUser.userId))) return false;
     liveSockets.set(connection, { session: user.hash, owner: user.userId, device: terminal.device.id });
     connection.on('close', () => liveSockets.delete(connection));
+    return true;
   });
 });
 

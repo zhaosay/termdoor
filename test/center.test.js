@@ -18,7 +18,7 @@ test('center login, binding, private proxy, authorization and revocation', async
   t.after(() => { child.kill(); fs.rmSync(data, { recursive: true, force: true }); });
   await new Promise((resolve, reject) => { child.stdout.once('data', resolve); child.once('exit', (code) => reject(new Error(`Center exited ${code}`))); });
   let cookie = '';
-  for (const asset of ['/setup', '/setup.js', '/setup.css']) {
+  for (const asset of ['/setup', '/setup.js', '/setup.css', '/device-status.js']) {
     const response = await fetch(`http://127.0.0.1:17701${asset}`);
     assert.equal(response.status, 200);
     if (asset === '/setup') assert.match(await response.text(), /设备接入码/);
@@ -46,7 +46,13 @@ test('center login, binding, private proxy, authorization and revocation', async
     if (url.pathname === '/') { res.setHeader('Content-Type', 'text/html'); res.end('<script src="/app.js"></script>'); }
     else { res.setHeader('Content-Type', 'application/json'); res.end('{"sessions":[]}'); }
   });
-  const wss = new WebSocket.Server({ server: mock }); wss.on('connection', (ws) => ws.on('message', (message) => ws.send(message)));
+  let holdUpgrade;
+  const wss = new WebSocket.Server({ noServer: true }); wss.on('connection', (ws) => ws.on('message', (message) => ws.send(message)));
+  mock.on('upgrade', (req, socket, head) => {
+    const complete = () => wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws));
+    if (holdUpgrade) { const hold = holdUpgrade; holdUpgrade = null; hold(complete); }
+    else complete();
+  });
   await new Promise((resolve) => mock.listen(device.port, '127.0.0.1', resolve));
   t.after(() => { wss.close(); mock.close(); });
   assert.equal((await call('/api/device/heartbeat', 'POST', { ...creds, apps: [{ id: 'aimini', name: 'aimini' }] }, { Authorization: `Bearer ${device.secret}` })).data.online, true);
@@ -100,6 +106,19 @@ test('center login, binding, private proxy, authorization and revocation', async
   await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'revoke' });
   await revoked;
   assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`, 'GET', null, { Cookie: otherCookie })).status, 404);
+  // Revoke access while the remote endpoint has not finished its handshake.
+  await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'terminal' });
+  const pendingUpgrade = new Promise((resolve) => { holdUpgrade = resolve; });
+  const pendingWs = new WebSocket(`ws://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: otherCookie, Origin: 'https://center.test' } });
+  const deniedPending = new Promise((resolve, reject) => {
+    pendingWs.on('error', () => {});
+    pendingWs.once('open', () => { pendingWs.terminate(); reject(new Error('revoked pending websocket opened')); });
+    pendingWs.once('unexpected-response', (request, response) => { response.resume(); resolve(response.statusCode); request.destroy(); });
+  });
+  const completeUpgrade = await pendingUpgrade;
+  await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'revoke' });
+  completeUpgrade();
+  assert.equal(await deniedPending, 403);
   await call(`/api/devices/${device.id}/grants`, 'POST', { username: 'other', role: 'viewer' });
   const logout = await call(`/d/${device.id}/apps/aimini/api/logout`, 'POST', {}, { Cookie: otherCookie });
   assert.equal(logout.status, 200); assert.match(logout.headers.get('set-cookie'), /Max-Age=0/);
@@ -115,4 +134,13 @@ test('center login, binding, private proxy, authorization and revocation', async
   assert.equal((await call('/api/device/heartbeat', 'POST', creds, { Authorization: `Bearer ${device.secret}` })).status, 401);
   assert.equal((await call('/api/logout', 'POST')).status, 200);
   assert.equal((await call('/api/devices')).status, 401);
+  const relogin = await call('/api/login', 'POST', { username: 'tester', password });
+  cookie = relogin.headers.get('set-cookie').split(';')[0];
+  assert.equal((await call('/api/password', 'POST', { current: password, password: 'a'.repeat(9) })).status, 400);
+  assert.equal((await call('/api/password', 'POST', { current: password, password: 'a'.repeat(257) })).status, 400);
+  assert.equal((await call('/api/password', 'POST', { current: 'wrong', password: 'a'.repeat(10) })).status, 401);
+  assert.equal((await call('/api/password', 'POST', { current: password, password: 'a'.repeat(10) })).status, 200);
+  assert.equal((await call('/api/me')).status, 401);
+  assert.equal((await call('/api/login', 'POST', { username: 'tester', password })).status, 401);
+  assert.equal((await call('/api/login', 'POST', { username: 'tester', password: 'a'.repeat(10) })).status, 200);
 });

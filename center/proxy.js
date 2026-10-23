@@ -56,6 +56,12 @@ function proxyUpgrade(req, socket, head, device, pathname, publicOrigin, onOpen)
   upstream.setTimeout(10000, () => upstream.destroy());
   upstream.on('upgrade', (response, peer, peerHead) => {
     peer.setTimeout(0);
+    // Authorization may change while the upstream handshake is pending.
+    if (!onOpen(socket)) {
+      peer.destroy();
+      socket.end('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n');
+      return;
+    }
     const headers = Object.entries(response.headers).map(([k, v]) => `${k}: ${v}`).join('\r\n');
     socket.write(`HTTP/1.1 101 Switching Protocols\r\n${headers}\r\n\r\n`);
     if (peerHead.length) socket.write(peerHead);
@@ -64,7 +70,6 @@ function proxyUpgrade(req, socket, head, device, pathname, publicOrigin, onOpen)
     socket.on('close', () => peer.destroy());
     peer.on('close', () => socket.destroy());
     peer.on('error', () => socket.destroy());
-    onOpen(socket);
   });
   upstream.on('response', (response) => {
     response.resume();

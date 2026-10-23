@@ -60,10 +60,15 @@ async function refreshDevices() {
       const row = document.createElement('li'); row.className = 'setup-device';
       const number = document.createElement('span'); number.textContent = String(index + 1);
       const name = document.createElement('span'); name.textContent = device.name;
-      const status = document.createElement('span'); status.textContent = device.online ? '在线' : '尚未连通';
+      const diagnosis = TermDoorDeviceStatus.describe(device);
+      const status = document.createElement('span'); status.textContent = diagnosis.label;
       const action = document.createElement('span');
       if (device.online) {
-        const link = document.createElement('a'); link.textContent = '打开终端'; link.href = `/d/${device.id}/?token=center`; link.target = '_blank'; link.rel = 'noopener'; action.append(link);
+        const link = document.createElement('a'); link.textContent = ['owner', 'terminal'].includes(device.role) ? '打开终端' : '查看应用'; link.href = ['owner', 'terminal'].includes(device.role) ? `/d/${device.id}/?token=center` : '/'; link.target = '_blank'; link.rel = 'noopener'; action.append(link);
+      } else {
+        const help = document.createElement('button'); help.type = 'button'; help.textContent = '查看原因';
+        help.onclick = () => { setupEl('setup-message').textContent = TermDoorErrors.format(diagnosis.key); };
+        action.append(help);
       }
       row.append(number, name, status, action);
       return row;

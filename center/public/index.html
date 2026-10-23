@@ -6,7 +6,7 @@
   <title>TermDoor · 我的设备</title>
   <link rel="stylesheet" href="/vendor/zhaoui.css">
   <link rel="stylesheet" href="/center.css">
-  <script src="/errors.js"></script><script src="/center.js" defer></script>
+  <script src="/errors.js"></script><script src="/device-status.js"></script><script src="/center.js" defer></script>
 </head>
 <body>
   <header><a class="brand" href="/">TermDoor<span>浏览器里的终端之门</span></a><a class="setup-nav" href="/setup">设备接入</a><div id="account" hidden><span id="username"></span><button id="password-button">修改密码</button><button id="logout">退出</button></div></header>
@@ -23,7 +23,7 @@
     <section id="setup-guide" class="panel"><h2>接入另一台电脑</h2><p>统一的设备接入向导会解释中心账号、设备接入码和本机权限分别在哪里获取、如何填写。</p><a class="open" href="/setup">打开设备接入向导</a></section>
     <p id="message" role="status" aria-live="polite"></p>
   </main>
-  <dialog id="password-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>修改密码</h2><form id="password-form"><label>当前密码<input name="current" type="password" autocomplete="current-password" required maxlength="256"></label><label>新密码<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><p>至少 12 个字符。修改后需要重新登录。</p><button class="primary" type="submit">保存密码</button></form><p id="password-message" role="status"></p></dialog>
+  <dialog id="password-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>修改密码</h2><form id="password-form"><label>当前密码<input name="current" type="password" autocomplete="current-password" required maxlength="256"></label><label>新密码<input name="password" type="password" autocomplete="new-password" minlength="10" maxlength="256" required></label><p>至少 10 个字符。修改后需要重新登录。</p><button class="primary" type="submit">保存密码</button></form><p id="password-message" role="status"></p></dialog>
   <dialog id="grant-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2 id="grant-title">访问权限</h2><p>只读：查看应用；应用操作：可调度任务；终端控制：还可执行电脑命令。</p><p>只授权已有的中心账号。撤销立即阻止新请求并断开终端连接。</p><ul id="grants"></ul><form id="grant-form"><label>中心账号<input name="username" required maxlength="40" autocomplete="off"></label><label>权限<select name="role" id="grant-role"><option value="viewer">只读查看</option><option value="operator">应用操作</option><option value="terminal">终端控制</option></select></label><button class="primary">保存权限</button></form><p id="grant-message" role="status"></p></dialog>
 </body>
 </html>

@@ -57,7 +57,7 @@ TermDoor 的网页、接口与终端共用 `public/errors.js` 错误目录。错
 | 45 | `TD-CENTER-007` | 登录尝试次数过多 | Too many login attempts | 五分钟后重试 / Retry in five minutes. |
 | 46 | `TD-CENTER-008` | 中心账号或密码错误 | Incorrect center account or password | 确认账号密码或联系管理员 / Check your credentials or contact the administrator. |
 | 47 | `TD-CENTER-009` | 请先登录中心 | Sign in to the center first | 使用中心账号与密码登录 / Sign in with your center account and password. |
-| 48 | `TD-CENTER-010` | 新密码需要 12 到 256 个字符 | Password must contain 12 to 256 characters | 调整密码长度后重试 / Adjust password length and retry. |
+| 48 | `TD-CENTER-010` | 新密码需要 10 到 256 个字符 | Password must contain 10 to 256 characters | 调整密码长度后重试 / Adjust password length and retry. |
 | 49 | `TD-CENTER-011` | 当前中心密码错误 | Incorrect current center password | 检查当前密码后重试 / Check the current password and retry. |
 | 50 | `TD-CENTER-012` | 有效设备接入码过多 | Too many active enrollment codes | 使用已有接入码或等待过期 / Use an existing code or wait for expiry. |
 | 51 | `TD-CENTER-013` | 设备不存在或不可访问 | Device not found or inaccessible | 返回设备列表重新选择 / Return to the device list and select again. |
@@ -98,3 +98,14 @@ TermDoor 的网页、接口与终端共用 `public/errors.js` 错误目录。错
 | - | `TD-UNKNOWN-001` | 操作失败 | Operation failed | 检查服务日志或联系管理员 / Check service logs or contact the administrator. |
 
 新增错误必须同步到目录并通过 `node --test test/*.test.js`。不能只抛出一条面向用户的裸字符串。
+
+## 连接诊断
+
+| 序号 | 错误码 | 中文 | English | 处理 |
+| --- | --- | --- | --- | --- |
+| 1 | `TD-CONNECT-001` | 设备未通信 | Device is not reporting | 在目标电脑启动 TermDoor，再点重新检查 / Start TermDoor on the target computer and retry. |
+| 2 | `TD-CONNECT-002` | 通路验证失败 | Tunnel authentication failed | 在目标电脑打开设备接入页，检查本机凭据 / Open Device enrollment on the target computer and check local credentials. |
+| 3 | `TD-CONNECT-003` | 通路未连通 | Tunnel is unavailable | 在目标电脑的设备接入页检查网络与连接状态，再重试 / Check network and tunnel status on the target computer, then retry. |
+| 4 | `TD-CONNECT-004` | 应用未启用 | Application is not enabled | 在目标电脑的应用与维护页启用应用 / Enable the application in Applications and maintenance on the target computer. |
+| 5 | `TD-CONNECT-005` | 应用访问密钥不可用 | Application access key is unavailable | 在目标电脑的应用与维护页检查密钥文件 / Check the key file in Applications and maintenance on the target computer. |
+| 6 | `TD-CONNECT-006` | 应用服务未就绪 | Application service is not ready | 在目标电脑启动应用并测试连接 / Start the application on the target computer and test its connection. |
