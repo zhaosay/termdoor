@@ -37,7 +37,7 @@ async function setupApi(url, method = 'GET', body) {
 }
 async function showAccount(user) {
   loggedIn = true; setupEl('setup-login').hidden = true; setupEl('setup-account').hidden = false;
-  setupEl('setup-account-name').textContent = `已登录中心账号：${user.username}`;
+  setupEl('setup-account-name').textContent = `已登录：${user.username}`;
   setupEl('setup-message').textContent = '';
   setupEl('nav-code').setAttribute('aria-current', 'step'); setupEl('nav-prepare').removeAttribute('aria-current');
   await refreshDevices();
@@ -46,7 +46,7 @@ function countdown() {
   if (!invite) return;
   const seconds = Math.max(0, Math.ceil((invite.expiresAt - Date.now()) / 1000));
   setupEl('copy-setup-code').disabled = !seconds || invite.used;
-  setupEl('code-countdown').textContent = invite.used ? '设备接入码已使用。请等待终端通路验证，无需重新生成。' : seconds ? `剩余 ${Math.floor(seconds / 60)} 分 ${String(seconds % 60).padStart(2, '0')} 秒 · 只能使用一次` : '设备接入码已过期。点击「生成设备接入码」获取新的接入码。';
+  setupEl('code-countdown').textContent = invite.used ? '已使用，正在确认连接。' : seconds ? `剩余 ${Math.floor(seconds / 60)} 分 ${String(seconds % 60).padStart(2, '0')} 秒 · 只能使用一次` : '已过期，请重新生成。';
 }
 async function refreshDevices() {
   if (!loggedIn || refreshing) return;
@@ -71,7 +71,7 @@ async function refreshDevices() {
     const success = current?.online;
     setupEl('setup-result-status').textContent = success ? '接入成功' : current ? '正在连接' : devices.length ? '已有设备' : '等待接入';
     setupEl('setup-result-status').dataset.state = success ? 'success' : '';
-    setupEl('setup-result').textContent = success ? `${current.name} 的终端通路已验证，可以打开终端。` : current ? `${current.name} 已登记，正在等待加密连接和终端通路验证。请在本机页面查看进度。` : invite ? '设备接入码已生成。请到本机页面填写接入码并确认接入，此处会自动更新结果。' : '下面是已登记设备。接入另一台电脑时，生成新的设备接入码即可。';
+    setupEl('setup-result').textContent = success ? `${current.name} 已在线，可以打开终端。` : current ? `${current.name} 正在连接，进度见本机页面。` : invite ? '接入码已生成，请到本机页面粘贴并接入。' : '设备在线后，点击「打开终端」。';
     if (current) { setupEl('nav-result').setAttribute('aria-current', 'step'); setupEl('nav-code').removeAttribute('aria-current'); }
   } catch (error) { setupEl('setup-message').textContent = TermDoorErrors.format(error); }
   finally { refreshing = false; }
