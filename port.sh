@@ -29,7 +29,7 @@ case "${1:-}" in
   set)
     PORT="${2:-}"
     if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1 ] || [ "$PORT" -gt 65535 ]; then
-      echo "[termdoor] 端口必须是 1-65535 之间的数字"
+      node lib/cli-ui.js error "invalid port"
       exit 1
     fi
     printf '%s' "$PORT" > "$PORT_FILE"

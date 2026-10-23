@@ -9,11 +9,11 @@ echo "[termdoor] pulling latest changes..."
 # fast-forward pull. It's a derived file, so discarding local edits to it is
 # always safe before pulling — npm install below regenerates it anyway.
 git checkout -- package-lock.json 2>/dev/null || true
-git pull --ff-only
+if ! git pull --ff-only; then node lib/cli-ui.js error "update failed"; exit 1; fi
 
 if git diff --name-only HEAD@{1} HEAD 2>/dev/null | grep -qE '^package(-lock)?\.json$'; then
   echo "[termdoor] package.json changed, running npm install..."
-  npm install
+  if ! npm install; then node lib/cli-ui.js error "install failed"; exit 1; fi
 fi
 
 echo "[termdoor] update complete, restarting..."

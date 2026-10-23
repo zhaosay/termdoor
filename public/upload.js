@@ -26,10 +26,10 @@ function wireDrop({ panesEl, hint, authQuery, currentSession, t }) {
           body: file,
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'failed');
+        if (!res.ok) throw new Error(TermDoorErrors.format(data, res.status));
         if (session) session.term.write(`\r\n\x1b[36m[${t('uploaded')}] ${data.path}\x1b[0m\r\n`);
       } catch (err) {
-        if (session) session.term.write(`\r\n\x1b[31m[${t('uploadFailed')}] ${err.message}\x1b[0m\r\n`);
+        if (session) session.term.write(`\r\n\x1b[31m[${t('uploadFailed')}] ${TermDoorErrors.format(err)}\x1b[0m\r\n`);
       }
     }
   });

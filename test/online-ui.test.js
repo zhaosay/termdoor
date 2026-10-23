@@ -11,6 +11,7 @@ for (const status of [200, 401, 403, 404]) {
       return elements.get(id);
     };
     const context = vm.createContext({
+      TermDoorErrors: require('../public/errors'),
       document: { getElementById: element },
       terminalFetch: async () => ({ status, ok: status === 200, json: async () => ({ configured: false }) }),
     });

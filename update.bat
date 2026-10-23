@@ -11,7 +11,7 @@ REM discarding local edits to it is safe -- npm install below regenerates it.
 git checkout -- package-lock.json >nul 2>&1
 git pull --ff-only
 if errorlevel 1 (
-  echo [termdoor] git pull failed - resolve manually.
+  node lib\cli-ui.js error "update failed"
   pause
   exit /b 1
 )

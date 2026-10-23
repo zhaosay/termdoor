@@ -1,4 +1,5 @@
 const http = require('http');
+const errors = require('../public/errors');
 
 function targetRequest(req, device, pathname, publicOrigin) {
   const url = new URL(pathname, 'http://localhost');
@@ -39,7 +40,7 @@ function proxyHttp(req, res, device, pathname, publicOrigin) {
   upstream.setTimeout(30000, () => upstream.destroy());
   upstream.on('error', () => {
     if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('Device unavailable');
+    res.end(errors.format('Device unavailable'));
   });
   req.on('aborted', () => upstream.destroy());
   req.pipe(upstream);

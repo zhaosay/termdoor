@@ -1,3 +1,5 @@
+const errors = require('../public/errors');
+const cli = require('../lib/cli-ui');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -6,7 +8,8 @@ const { proxyHttp, proxyUpgrade } = require('./proxy');
 
 const centerUrl = new URL(process.env.TERMDOOR_CENTER_URL || 'https://center.example.com');
 if (centerUrl.protocol !== 'https:' || centerUrl.username || centerUrl.password || centerUrl.pathname !== '/' || centerUrl.search || centerUrl.hash || centerUrl.port) {
-  throw new Error('TERMDOOR_CENTER_URL must be an HTTPS origin on port 443');
+  cli.report('TERMDOOR_CENTER_URL must be an HTTPS origin on port 443', { fatal: true });
+  process.exit(1);
 }
 const origin = centerUrl.origin;
 const sessions = new Map();
@@ -20,7 +23,7 @@ const headers = {
 };
 function json(res, status, data, extra = {}) {
   res.writeHead(status, { ...headers, 'Content-Type': 'application/json; charset=utf-8', ...extra });
-  res.end(JSON.stringify(data));
+  res.end(JSON.stringify(errors.enrich(data, status)));
 }
 async function body(req) {
   const chunks = [];
@@ -119,9 +122,9 @@ async function handle(req, res) {
     sessions.set(digest(token), { userId: user.id, username: user.username, expires: now + TTL });
     return json(res, 200, { username: user.username }, { 'Set-Cookie': `td_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${TTL / 1000}` });
   }
-  if (['/', '/setup', '/setup.html', '/setup.js', '/setup.css', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
+  if (['/', '/setup', '/setup.html', '/setup.js', '/setup.css', '/errors.js', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
     const filename = url.pathname === '/' ? 'index.html' : ['/setup', '/setup.html'].includes(url.pathname) ? 'setup.html' : url.pathname.slice(1);
-    const target = filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : filename === 'setup.css' ? path.join(__dirname, '../public/online-page.css') : path.join(__dirname, 'public', filename);
+    const target = filename === 'errors.js' ? path.join(__dirname, '../public/errors.js') : filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : filename === 'setup.css' ? path.join(__dirname, '../public/online-page.css') : path.join(__dirname, 'public', filename);
     const type = filename.endsWith('.html') ? 'text/html' : filename.endsWith('.css') ? 'text/css' : 'application/javascript';
     res.writeHead(200, { ...headers, 'Content-Type': `${type}; charset=utf-8` });
     return res.end(fs.readFileSync(target));
@@ -219,5 +222,5 @@ setInterval(() => {
   for (const [ip, item] of failures) if (item.until < Date.now()) failures.delete(ip);
   for (const [socket, meta] of liveSockets) if (!sessions.has(meta.session) || !db.devices.some((d) => d.id === meta.device)) socket.destroy();
 }, 5000).unref();
-server.listen(Number(process.env.TERMDOOR_CENTER_PORT || 17001), '127.0.0.1', () => console.log(`TermDoor center: ${origin}`));
+server.listen(Number(process.env.TERMDOOR_CENTER_PORT || 17001), '127.0.0.1', () => { cli.heading('线上中心已就绪 / Center is ready'); cli.line('Center', origin); });
 plugin.listen(Number(process.env.TERMDOOR_PLUGIN_PORT || 17002), '127.0.0.1');

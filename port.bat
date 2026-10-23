@@ -16,15 +16,15 @@ goto usage
 set "NEWPORT=%~2"
 echo %NEWPORT%| findstr /R "^[0-9][0-9]*$" >nul
 if errorlevel 1 (
-  echo [termdoor] 端口必须是 1-65535 之间的数字
+  node lib\cli-ui.js error "invalid port"
   exit /b 1
 )
 if %NEWPORT% LSS 1 (
-  echo [termdoor] 端口必须是 1-65535 之间的数字
+  node lib\cli-ui.js error "invalid port"
   exit /b 1
 )
 if %NEWPORT% GTR 65535 (
-  echo [termdoor] 端口必须是 1-65535 之间的数字
+  node lib\cli-ui.js error "invalid port"
   exit /b 1
 )
 > "%PORT_FILE%" echo %NEWPORT%

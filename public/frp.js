@@ -20,15 +20,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
   const msg = $('frp-msg');
   const saveBtn = $('frp-save');
 
-  const ERRORS = {
-    'invalid serverAddr': '服务器地址只能是主机名或 IPv4，不能带空格、协议或端口',
-    'invalid serverPort': '控制端口要是 1 到 65535 的整数',
-    'invalid remotePort': '远程端口要是 1 到 65535 的整数',
-    'invalid proxyName': '代理名只能用字母、数字、下划线、短横线，最长 40 个字符',
-    'invalid token': '令牌只能用字母、数字和 . _ ~ + / = - ，长度 8 到 128',
-    'token required': '还没有保存过令牌，请填写',
-    'remote port not configured': '还没有配置远程端口，见 README 的「远程端口」',
-  };
+
 
   function say(text, bad, command) {
     msg.textContent = text;
@@ -63,7 +55,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
       body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(ERRORS[data.error] || '保存失败');
+    if (!res.ok) throw new Error(TermDoorErrors.format(data, res.status));
     return data;
   }
 
@@ -76,7 +68,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
       try {
         fill(await call('GET'));
       } catch (err) {
-        say(err.message, true);
+        say(TermDoorErrors.format(err), true);
       }
       modal.classList.add('show');
     });
@@ -96,7 +88,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
       fill(st);
       say('已保存。重启 frpc 后生效：', false, `frpc -c ${st.configPath}`);
     } catch (err) {
-      say(err.message, true);
+      say(TermDoorErrors.format(err), true);
     }
   });
 
@@ -107,7 +99,7 @@ function initFrp({ authQuery, closeAllDropdowns }) {
       fill(await call('DELETE'));
       say('已清除。');
     } catch (err) {
-      say(err.message, true);
+      say(TermDoorErrors.format(err), true);
     }
   });
 

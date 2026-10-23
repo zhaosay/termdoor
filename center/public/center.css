@@ -39,3 +39,5 @@ dialog::backdrop{background:rgb(0 0 0 / .65)}
 #bind-code{font-family:var(--zh-font-mono);font-size:var(--zh-font-base)}
 #message,#password-message{color:var(--zh-danger);overflow-wrap:anywhere}
 @media(max-width:680px){header{padding:var(--zh-space-4)}.brand span{display:none}main{padding:var(--zh-space-8) var(--zh-space-4)}#login{grid-template-columns:1fr;gap:var(--zh-space-6);min-height:auto}.heading{align-items:flex-start;flex-direction:column}.device{grid-template-columns:3ch minmax(0,1fr);align-items:start}.device-actions{grid-column:2;justify-self:start}.panel{padding:var(--zh-space-6)}h1{font-size:2.8rem}}
+
+#message, #password-message { white-space: pre-line; overflow-wrap: anywhere; }

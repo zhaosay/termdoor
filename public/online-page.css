@@ -58,3 +58,5 @@ aside h2 { font-size: var(--zh-font-base); }
 .setup-device span { overflow-wrap: anywhere; }
 @media (max-width: 480px) { .setup-device { grid-template-columns: 2ch minmax(0, 1fr) 5em; } .setup-device > span:last-child { grid-column: 2 / -1; min-height: 1.6em; } #setup-devices a { margin-left: 0; } }
 @media (max-width: 760px) { main { padding: var(--zh-space-6) var(--zh-space-4); } .setup-layout { grid-template-columns: 1fr; gap: var(--zh-space-6); } .setup-header { gap: var(--zh-space-3); padding: var(--zh-space-4); font-size: var(--zh-font-base); } .step-nav { grid-template-columns: 1fr; gap: var(--zh-space-3); } .section-heading h2 { font-size: var(--zh-font-base); } .connection-stages { grid-template-columns: 1fr; } aside { padding: var(--zh-space-5); } }
+
+#online-info, #setup-message, #local-address-error { white-space: pre-line; overflow-wrap: anywhere; }

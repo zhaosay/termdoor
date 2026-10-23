@@ -13,7 +13,7 @@ function updateLocalLink() {
     setupEl('local-address-error').textContent = '';
   } catch {
     setupEl('open-local').removeAttribute('href'); setupEl('open-local').setAttribute('aria-disabled', 'true');
-    setupEl('local-address-error').textContent = '请填写本机主端口地址，例如 http://localhost:3050，不能填写局域网 IP 或线上中心地址。';
+    setupEl('local-address-error').textContent = TermDoorErrors.format('invalid local address');
   }
 }
 setupEl('local-address').addEventListener('input', updateLocalLink);
@@ -28,7 +28,11 @@ async function setupApi(url, method = 'GET', body) {
   const response = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
   const data = await response.json();
   if (response.status === 401 && url !== '/api/login') showLoggedOut();
-  if (!response.ok) throw new Error(data.error || '请求失败，请重试');
+  if (!response.ok) {
+    const error = new Error(TermDoorErrors.format(data, response.status));
+    error.status = response.status;
+    throw error;
+  }
   return data;
 }
 async function showAccount(user) {
@@ -69,13 +73,13 @@ async function refreshDevices() {
     setupEl('setup-result-status').dataset.state = success ? 'success' : '';
     setupEl('setup-result').textContent = success ? `${current.name} 的终端通路已验证，可以打开终端。` : current ? `${current.name} 已登记，正在等待加密连接和终端通路验证。请在本机页面查看进度。` : invite ? '设备接入码已生成。请到本机页面填写接入码并确认接入，此处会自动更新结果。' : '下面是已登记设备。接入另一台电脑时，生成新的设备接入码即可。';
     if (current) { setupEl('nav-result').setAttribute('aria-current', 'step'); setupEl('nav-code').removeAttribute('aria-current'); }
-  } catch (error) { setupEl('setup-message').textContent = error.message; }
+  } catch (error) { setupEl('setup-message').textContent = TermDoorErrors.format(error); }
   finally { refreshing = false; }
 }
 setupEl('setup-login-form').onsubmit = async (event) => {
   event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true;
   try { await showAccount(await setupApi('/api/login', 'POST', Object.fromEntries(new FormData(event.target)))); event.target.reset(); }
-  catch (error) { setupEl('setup-message').textContent = error.message; } finally { button.disabled = false; }
+  catch (error) { setupEl('setup-message').textContent = TermDoorErrors.format(error); } finally { button.disabled = false; }
 };
 setupEl('generate-code').onclick = async () => {
   setupEl('generate-code').disabled = true;
@@ -86,15 +90,15 @@ setupEl('generate-code').onclick = async () => {
     setupEl('copy-setup-code').textContent = '复制设备接入码'; setupEl('setup-message').textContent = '';
     setupEl('nav-code').setAttribute('aria-current', 'step'); setupEl('nav-result').removeAttribute('aria-current');
     countdown(); await refreshDevices();
-  } catch (error) { setupEl('setup-message').textContent = error.message; }
+  } catch (error) { setupEl('setup-message').textContent = TermDoorErrors.format(error); }
   finally { setupEl('generate-code').disabled = false; }
 };
 setupEl('copy-setup-code').onclick = async () => {
   countdown(); if (!invite || invite.used || Date.now() >= invite.expiresAt) return;
   try { await navigator.clipboard.writeText(invite.code); setupEl('copy-setup-code').textContent = '设备接入码已复制'; }
-  catch { setupEl('setup-code').select(); setupEl('setup-message').textContent = '无法自动复制，请选中接入码手动复制。'; }
+  catch { setupEl('setup-code').select(); setupEl('setup-message').textContent = TermDoorErrors.format('clipboard failed'); }
 };
-setupApi('/api/me').then(showAccount).catch((error) => { showLoggedOut(); if (error.message !== '请先登录') setupEl('setup-message').textContent = error.message; });
+setupApi('/api/me').then(showAccount).catch((error) => { showLoggedOut(); if (error.status !== 401) setupEl('setup-message').textContent = TermDoorErrors.format(error); });
 const countdownTimer = setInterval(countdown, 1000);
 const devicesTimer = setInterval(() => { if (!document.hidden) refreshDevices(); }, 5000);
 window.addEventListener('pagehide', () => { clearInterval(countdownTimer); clearInterval(devicesTimer); }, { once: true });

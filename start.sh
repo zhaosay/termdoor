@@ -12,7 +12,7 @@ fi
 
 if [ ! -d node_modules ]; then
   echo "[termdoor] node_modules not found, running npm install..."
-  npm install
+  if ! npm install; then node lib/cli-ui.js error "install failed"; exit 1; fi
 fi
 
 # node-pty's prebuilt spawn-helper binary can lose its executable bit during

@@ -4,7 +4,9 @@ async function api(url, method = 'GET', body) {
   const data = await response.json();
   if (!response.ok) {
     if (response.status === 401 && url !== '/api/login' && url !== '/api/password') showLogin();
-    throw new Error(data.error || '请求失败');
+    const error = new Error(TermDoorErrors.format(data, response.status));
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
@@ -35,7 +37,7 @@ async function refresh() {
     const remove = document.createElement('button'); remove.textContent = '解除设备接入';
     remove.onclick = async () => {
       if (!confirm(`解除「${device.name}」的设备接入？线上访问将立即停止，局域网功能继续可用。`)) return;
-      try { await api(`/api/devices/${device.id}`, 'DELETE'); await refresh(); } catch (err) { message(err.message); }
+      try { await api(`/api/devices/${device.id}`, 'DELETE'); await refresh(); } catch (err) { message(TermDoorErrors.format(err)); }
     };
     actions.append(openSlot, remove); row.append(number, info, actions); return row;
   });
@@ -44,15 +46,15 @@ async function refresh() {
 $('login-form').onsubmit = async (event) => {
   event.preventDefault(); const button = event.target.querySelector('button'); button.disabled = true;
   try { await showDashboard(await api('/api/login', 'POST', Object.fromEntries(new FormData(event.target)))); event.target.reset(); }
-  catch (err) { message(err.message); } finally { button.disabled = false; }
+  catch (err) { message(TermDoorErrors.format(err)); } finally { button.disabled = false; }
 };
-$('logout').onclick = async () => { try { await api('/api/logout', 'POST'); showLogin(); } catch (err) { message(err.message); } };
+$('logout').onclick = async () => { try { await api('/api/logout', 'POST'); showLogin(); } catch (err) { message(TermDoorErrors.format(err)); } };
 $('bind').onclick = () => location.assign('/setup');
 $('password-button').onclick = () => { $('password-form').reset(); $('password-message').textContent = ''; $('password-dialog').showModal(); };
 $('password-form').onsubmit = async (event) => {
   event.preventDefault();
   try { await api('/api/password', 'POST', Object.fromEntries(new FormData(event.target))); $('password-dialog').close(); showLogin(); message('密码已修改，请重新登录'); }
-  catch (err) { $('password-message').textContent = err.message; }
+  catch (err) { $('password-message').textContent = TermDoorErrors.format(err); }
 };
-api('/api/me').then(showDashboard).catch((err) => { showLogin(); if (err.message !== '请先登录') message(err.message); });
-setInterval(() => { if (!$('dashboard').hidden) refresh().catch((err) => message(err.message)); }, 15000);
+api('/api/me').then(showDashboard).catch((err) => { showLogin(); if (err.status !== 401) message(TermDoorErrors.format(err)); });
+setInterval(() => { if (!$('dashboard').hidden) refresh().catch((err) => message(TermDoorErrors.format(err))); }, 15000);

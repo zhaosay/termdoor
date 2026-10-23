@@ -21,38 +21,42 @@ LOG_FILE=".run/run.log"
 
 BOLD=$'\033[1m'; DIM=$'\033[2m'; GREEN=$'\033[32m'; RED=$'\033[31m'
 YELLOW=$'\033[33m'; CYAN=$'\033[36m'; RESET=$'\033[0m'
+if [ ! -t 1 ] || [ -n "${NO_COLOR+x}" ] || [ "${TERM:-}" = dumb ]; then
+  BOLD=''; DIM=''; GREEN=''; RED=''; YELLOW=''; CYAN=''; RESET=''
+fi
 
-pause() { echo; read -r -p "${DIM}回车返回菜单${RESET} " _; }
+pause() { echo; read -r -p "${DIM}回车返回 / Enter to return${RESET} " _; }
 running() { ./restart.sh status >/dev/null 2>&1; }
 flag_on() { [ -f "../data/webcli/$1" ] && [ "$(cat "../data/webcli/$1" 2>/dev/null)" = "1" ]; }
 current_port() { echo "${PROJECT_PORT:-$(cat "$PORT_FILE" 2>/dev/null || echo 3050)}"; }
 
 header() {
-  clear 2>/dev/null || true
-  echo "${BOLD}  webcli 控制面板${RESET}"
-  echo "  ${DIM}$(pwd)${RESET}"
+  [ -t 1 ] && clear 2>/dev/null || true
+  node lib/cli-ui.js heading "控制室 / Control room"
   echo
   if running; then
-    echo "  状态   ${GREEN}● 运行中${RESET} ${DIM}(端口 $(current_port))${RESET}"
+    echo "  状态   ${GREEN}● 运行中 / Ready${RESET} ${DIM}(端口 $(current_port))${RESET}"
     local link
     link="$(grep -m1 'open:' "$LOG_FILE" 2>/dev/null | sed 's/.*open: //')"
     [ -n "$link" ] && echo "  链接   ${CYAN}$link${RESET}"
   else
-    echo "  状态   ${RED}○ 未运行${RESET}"
+    echo "  状态   ${RED}○ 未运行 / Resting${RESET}"
   fi
   echo -n "  二次验证 "; flag_on auth-enabled && echo -n "${GREEN}开${RESET}" || echo -n "${DIM}关${RESET}"
   echo -n "   会话记录 "; flag_on log-enabled && echo "${GREEN}开${RESET}" || echo "${DIM}关${RESET}"
   echo
-  echo "  ${BOLD}1${RESET}  启动 / 重启"
-  echo "  ${BOLD}2${RESET}  停止"
-  echo "  ${BOLD}3${RESET}  更新代码并重启"
-  echo "  ${BOLD}4${RESET}  显示访问链接和二维码"
+  echo "  ${CYAN}-- 出发 / LET'S GO ------------------------------${RESET}"
+  echo "  ${BOLD}1${RESET}  启动 / 重启        Start / Restart"
+  echo "  ${BOLD}2${RESET}  停止               Stop"
+  echo "  ${BOLD}3${RESET}  更新并重启         Update"
+  echo "  ${BOLD}4${RESET}  访问链接与二维码   Links + QR"
   echo
-  echo "  ${DIM}5  二次验证开关     6  重新生成 token${RESET}"
-  echo "  ${DIM}7  会话记录开关     8  查看日志${RESET}"
-  echo "  ${DIM}9  安装全局 webcli 命令   p  修改监听端口${RESET}"
-  echo "  ${DIM}u  卸载 webcli（删除所有数据和代码）${RESET}"
-  echo "  ${DIM}0  退出${RESET}"
+  echo "  ${YELLOW}-- 小工具 / TOOLBOX ----------------------------${RESET}"
+  echo "  ${DIM}5  二次验证 / Auth     6  更新令牌 / Token${RESET}"
+  echo "  ${DIM}7  会话记录 / Record   8  查看日志 / Logs${RESET}"
+  echo "  ${DIM}9  安装命令 / Install   p  端口 / Port${RESET}"
+  echo "  ${DIM}u  卸载 / Uninstall（删除数据与代码 / Deletes data + code）${RESET}"
+  echo "  ${DIM}0  退出 / Exit${RESET}"
   echo
 }
 
@@ -65,7 +69,7 @@ do_update() {
   # the foreground — run it in a subshell that restarts in the background instead.
   if ! git pull --ff-only 2>&1; then
     echo
-    echo "${RED}[termdoor] 更新失败${RESET}（本地有改动挡住了 git pull，先 git stash 或 git checkout .）"
+    node lib/cli-ui.js error "update failed"
     pause
     return
   fi
@@ -82,7 +86,7 @@ do_link() {
   echo
   # derived from the token file, so it works whether or not the service is up
   node lib/print-link.js
-  running || echo "${YELLOW}[termdoor] 注意：服务当前没在跑，先选 1 启动${RESET}"
+  running || node lib/cli-ui.js error "not running"
   pause
 }
 
@@ -141,7 +145,7 @@ do_install_cli() {
     mkdir -p "$HOME/.local/bin" 2>/dev/null && target="$HOME/.local/bin/webcli"
   fi
   if [ -z "${target:-}" ]; then
-    echo "${RED}[termdoor] 找不到可写目录${RESET}，手动加个别名:"
+    node lib/cli-ui.js error EACCES
     echo "  echo \"alias webcli='$src'\" >> ~/.zshrc && source ~/.zshrc"
     return 1
   fi
@@ -202,7 +206,7 @@ fi
 
 while true; do
   header
-  read -r -p "  选择: " choice
+  read -r -p "  今天想做点什么？ / Pick a number: " choice
   case "$choice" in
     1) do_restart ;;
     2) do_stop ;;
@@ -216,6 +220,6 @@ while true; do
     p|P) do_port ;;
     u|U) do_uninstall ;;
     0|q|Q) echo; exit 0 ;;
-    *) ;;
+    *) node lib/cli-ui.js error "invalid choice"; pause ;;
   esac
 done

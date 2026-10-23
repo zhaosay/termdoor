@@ -24,7 +24,11 @@ test('LAN terminal and local-only management remain protected', async (t) => {
   });
   const token = fs.readFileSync(path.join(data, 'token.txt'), 'utf8');
   const get = (pathname, opts) => fetch(`http://localhost:17703${pathname}`, opts);
-  assert.equal((await get('/api/online')).status, 401);
+  const unauthorized = await get('/api/online');
+  assert.equal(unauthorized.status, 401);
+  const failure = await unauthorized.json();
+  assert.equal(failure.errorCode, 'TD-AUTH-001');
+  assert.match(failure.errorText, /本机访问令牌.*Invalid local access token/);
   const forged = await new Promise((resolve, reject) => {
     http.get(`http://localhost:17703/api/online?token=${token}`, { headers: { Host: 'evil.test' } }, (res) => { res.resume(); resolve(res.statusCode); }).on('error', reject);
   });

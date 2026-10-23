@@ -39,7 +39,7 @@ The device database contains terminal credentials and must remain private.
 
 ## Files to deploy
 
-Copy `center/`, `lib/qr.js`, `public/online-page.css`, and `public/vendor/zhaoui.css` into the same layout
+Copy `center/`, `lib/qr.js`, `lib/cli-ui.js`, `public/errors.js`, `public/online-page.css`, and `public/vendor/zhaoui.css` into the same layout
 under `/opt/termdoor-center`. Install `qrcode-terminal@0.12.0` in that root.
 Node.js 18+ is required. frps 0.71.0 is expected at `/usr/local/bin/frps`.
 

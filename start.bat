@@ -8,7 +8,7 @@ if not exist node_modules (
   echo [termdoor] node_modules not found, running npm install...
   call npm install
   if errorlevel 1 (
-    echo [termdoor] npm install failed.
+    node lib\cli-ui.js error "install failed"
     pause
     exit /b 1
   )
@@ -19,7 +19,7 @@ REM identifies this project directory - restart.bat's kill_if_tracked relies
 REM on that to avoid ever killing an unrelated process that got the same PID.
 node "%~dp0server.js"
 if errorlevel 1 (
-  echo [termdoor] server exited with an error.
+  node lib\cli-ui.js error "start failed"
   echo [termdoor] 如果是端口被占用，换个端口再试: set PROJECT_PORT=3060 ^&^& start.bat
   pause
 )

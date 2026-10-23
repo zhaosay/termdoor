@@ -2,14 +2,15 @@
 set -eu
 
 APP=/opt/termdoor-center
-DOMAIN=${TERMDOOR_CENTER_DOMAIN:?Set TERMDOOR_CENTER_DOMAIN to your public center hostname}
+DOMAIN=${TERMDOOR_CENTER_DOMAIN:-}
+[ -n "$DOMAIN" ] || { node "$APP/lib/cli-ui.js" error "invalid domain"; exit 1; }
 case "$DOMAIN" in
-    *[!a-zA-Z0-9.-]*|.*|*..*|*.) echo 'Invalid center hostname' >&2; exit 1 ;;
+    *[!a-zA-Z0-9.-]*|.*|*..*|*.) node "$APP/lib/cli-ui.js" error "invalid domain"; exit 1 ;;
 esac
 NGINX=${TERMDOOR_NGINX_BIN:-/usr/sbin/nginx}
 VHOST=${TERMDOOR_NGINX_VHOST:-/etc/nginx/conf.d/termdoor-center.conf}
-[ -x "$NGINX" ] || { echo "nginx executable not found: $NGINX" >&2; exit 1; }
-[ -x /usr/local/bin/frps ] || { echo 'Install frps 0.71.0 at /usr/local/bin/frps first' >&2; exit 1; }
+[ -x "$NGINX" ] || { node "$APP/lib/cli-ui.js" error "nginx missing"; exit 1; }
+[ -x /usr/local/bin/frps ] || { node "$APP/lib/cli-ui.js" error "frps missing"; exit 1; }
 
 id termdoor >/dev/null 2>&1 || useradd --system --home-dir /var/lib/termdoor-center --shell /sbin/nologin termdoor
 mkdir -p /var/lib/termdoor-center /var/lib/termdoor-acme/.well-known/acme-challenge /var/lib/termdoor-cert

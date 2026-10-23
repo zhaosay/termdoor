@@ -114,7 +114,7 @@ start_background() {
     fi
     if ! kill -0 "$shell_pid" 2>/dev/null; then
       if grep -q "EADDRINUSE" "$LOG_FILE" 2>/dev/null; then
-        say "端口 $PORT 被别的程序占用（不是 TermDoor，所以没有动它）"
+        node lib/cli-ui.js error EADDRINUSE
         local block_pid=""
         command -v lsof >/dev/null 2>&1 && block_pid="$(lsof -ti "tcp:$PORT" -sTCP:LISTEN 2>/dev/null | head -1)"
         if [ -n "$block_pid" ]; then
@@ -132,14 +132,14 @@ start_background() {
         say "临时换一次: PROJECT_PORT=3060 ./restart.sh --bg"
         say "固定换端口: ./port.sh set 3060 然后 ./restart.sh --bg"
       else
-        say "启动失败，日志如下:"
+        node lib/cli-ui.js error "start failed"
         echo "-----"; tail -20 "$LOG_FILE"; echo "-----"
       fi
       return 1
     fi
     sleep 0.5
   done
-  say "等了 120 秒还没就绪，看看 $LOG_FILE"
+  node lib/cli-ui.js error "connection timeout"
   return 1
 }
 

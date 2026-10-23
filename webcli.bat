@@ -77,8 +77,7 @@ goto menu
 
 :header
 cls
-echo   webcli 控制面板
-echo   %CD%
+node lib\cli-ui.js heading "控制室 / Control room"
 echo.
 set "PORT=3050"
 if exist "%DATA_DIR%\port.txt" set /p PORT=<"%DATA_DIR%\port.txt"
@@ -104,16 +103,17 @@ if exist "%DATA_DIR%\log-enabled" (
 )
 echo   二次验证 !AUTH_STATE!     会话记录 !LOG_STATE!
 echo.
-echo   1  启动 / 重启
-echo   2  停止
-echo   3  更新代码并重启
-echo   4  显示访问链接和二维码
+echo   -- 出发 / LET US GO ------------------------------
+echo   1  启动 / 重启        Start / Restart
+echo   2  停止               Stop
+echo   3  更新并重启         Update
+echo   4  访问链接与二维码   Links + QR
 echo.
-echo   5  二次验证开关     6  重新生成 token
-echo   7  会话记录开关     8  查看日志
-echo   9  安装全局 webcli 命令   p  修改监听端口
+echo   5  二次验证 / Auth     6  重新生成 token
+echo   7  会话记录 / Record     8  查看日志
+echo   9  安装命令 / Install   p  修改监听端口
 echo   u  卸载 webcli（删除所有数据和代码）
-echo   0  退出
+echo   0  退出 / Exit
 echo.
 exit /b 0
 
@@ -210,7 +210,7 @@ if defined TARGET_DIR (
   echo [termdoor] 已安装: %TARGET_DIR%\webcli.bat
   echo 现在任何目录敲 webcli 都能呼出面板，webcli 3 直接更新重启
 ) else (
-  echo [termdoor] 找不到可写目录，手动把本项目目录加进 PATH:
+  node lib\cli-ui.js error EACCES
   echo   setx PATH "%%PATH%%;%PROJECT_DIR%"
 )
 exit /b 0

@@ -96,11 +96,11 @@
         document.title = name;
         chromeTitle.textContent = name;
       };
-      terminalFetch('/api/name').then((r) => r.json()).then(({ name }) => { if (name) applyName(name); }).catch(() => {});
+      terminalFetch('/api/name').then(terminalJson).then(({ name }) => { if (name) applyName(name); }).catch(() => {});
 
       const versionInfo = document.getElementById('version-info');
       const versionBadge = document.getElementById('version-badge');
-      terminalFetch('/api/version').then((r) => r.json()).then(({ version, commit, commitDate, platform, projectRoot }) => {
+      terminalFetch('/api/version').then(terminalJson).then(({ version, commit, commitDate, platform, projectRoot }) => {
         const label = `v${version}${commit ? ' · ' + commit : ''}`;
         versionInfo.textContent = label;
         versionBadge.textContent = `v${version}`;
@@ -122,7 +122,7 @@
       }
 
       function refreshConnections() {
-        terminalFetch(`/api/connections?${authQuery}`).then((r) => r.json()).then(({ connections }) => {
+        terminalFetch(`/api/connections?${authQuery}`).then(terminalJson).then(({ connections }) => {
           if (!Array.isArray(connections)) return;
           connCount.textContent = connections.length;
           connDropdown.innerHTML = '';
@@ -207,7 +207,7 @@
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id: item.id }),
-            }).then((r) => r.json()).then(({ commands }) => renderQuickCommands(commands || [])).catch(() => {});
+            }).then(terminalJson).then(({ commands }) => renderQuickCommands(commands || [])).catch(showTermDoorError);
           });
           chip.appendChild(label);
           chip.appendChild(del);
@@ -289,12 +289,12 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ label, command, cwd }),
-        }).then((r) => r.json()).then(({ commands }) => {
+        }).then(terminalJson).then(({ commands }) => {
           quickcmdModal.classList.remove('show');
           renderQuickCommands(commands || []);
-        }).catch(() => quickcmdModal.classList.remove('show'));
+        }).catch(showTermDoorError);
       });
-      terminalFetch(`/api/quick-commands?${authQuery}`).then((r) => r.json())
+      terminalFetch(`/api/quick-commands?${authQuery}`).then(terminalJson)
         .then(({ commands }) => renderQuickCommands(commands || [])).catch(() => {});
 
       const THEME_STORAGE = 'webcli-theme';
@@ -334,7 +334,7 @@
           }).catch(() => {
             if (attempts >= 60) {
               clearInterval(poll);
-              serviceActionStatus.textContent = '等待超时，请手动刷新页面确认状态';
+              serviceActionStatus.textContent = TermDoorErrors.format('connection timeout');
             }
           });
         }, 1500);
@@ -345,15 +345,15 @@
         restartBtn.disabled = true;
         serviceActionStatus.textContent = `正在${label}…`;
         terminalFetch(`${path}?${authQuery}`, { method: 'POST' })
-          .then((r) => {
-            if (!r.ok) throw new Error('request failed');
+          .then(async (r) => {
+            await terminalJson(r);
             // Give the detached script a moment to actually stop the old
             // process before we start polling, or the first few polls would
             // just hit the still-running (soon to be replaced) instance.
             setTimeout(waitForServerThenReload, 1000);
           })
-          .catch(() => {
-            serviceActionStatus.textContent = '请求失败，请检查终端日志';
+          .catch((error) => {
+            serviceActionStatus.textContent = TermDoorErrors.format(error);
             updateBtn.disabled = false;
             restartBtn.disabled = false;
           });
@@ -380,14 +380,15 @@
             return;
           }
           try {
-            const res = await terminalFetch(`/api/name?token=${encodeURIComponent(token)}`, {
+            const res = await terminalFetch(`/api/name?${authQuery}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ name: value }),
             });
-            const data = await res.json();
+            const data = await terminalJson(res);
             applyName(data.name || current);
-          } catch {
+          } catch (error) {
+            showTermDoorError(error);
             applyName(current);
           }
         };
@@ -620,6 +621,8 @@
               session.awaitingRestartCheck = false;
               if (msg.title) applyAutoTitle(session, msg.title);
               saveSids();
+            } else if (msg.type === 'error') {
+              session.term.write('\r\n\x1b[31m' + TermDoorErrors.format(msg) + '\x1b[0m\r\n');
             } else if (msg.type === 'title') {
               applyAutoTitle(session, msg.title);
             }
@@ -637,9 +640,9 @@
           // backoff), a network blip is a much less likely explanation than
           // the service having actually been stopped, so say so once.
           if (session.reconnectAttempts === 0) {
-            session.term.write(`\r\n\x1b[31m[${t('connectionLost')}]\x1b[0m\r\n`);
+            session.term.write(`\r\n\x1b[31m${TermDoorErrors.format('connection lost')}\x1b[0m\r\n`);
           } else if (session.reconnectAttempts === 6) {
-            session.term.write(`\r\n\x1b[33m[${t('longDisconnect')}]\x1b[0m\r\n`);
+            session.term.write(`\r\n\x1b[33m${TermDoorErrors.format('connection timeout')}\x1b[0m\r\n`);
             armLongDisconnectBanner();
           }
           const delay = Math.min(1000 * 2 ** session.reconnectAttempts, 10000);
@@ -895,7 +898,7 @@
           document.getElementById('qr-url').textContent = data.url;
           shareUrl = data.url;
         } catch {
-          document.getElementById('qr-box').innerHTML = '<p>获取失败</p>';
+          document.getElementById('qr-box').innerHTML = '<p>' + TermDoorErrors.format('fetch failed') + '</p>';
         }
       });
       document.getElementById('qr-close').addEventListener('click', () => qrModal.classList.remove('show'));
@@ -973,7 +976,7 @@
       }
 
       const SECONDARY_KEY_STORAGE = 'webcli-secondary-key' + TERMDoorBase;
-      terminalFetch('/api/auth-status').then((r) => r.json()).then(({ enabled }) => {
+      terminalFetch('/api/auth-status').then(terminalJson).then(({ enabled }) => {
         if (!enabled) {
           startApp(null);
           return;
