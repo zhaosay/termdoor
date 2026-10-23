@@ -34,6 +34,12 @@ async function refresh() {
     if (device.online) {
       const open = document.createElement('a'); open.className = 'open'; open.href = `/d/${device.id}/?token=center`; open.textContent = '打开终端'; open.target = '_blank'; open.rel = 'noopener'; openSlot.append(open);
     }
+    if (device.online) for (const app of device.apps || []) {
+      const open = document.createElement('a'); open.className = 'open';
+      open.href = `/d/${device.id}/apps/${encodeURIComponent(app.id)}/`;
+      open.textContent = `打开 ${app.name}`; open.target = '_blank'; open.rel = 'noopener';
+      openSlot.append(open);
+    }
     const remove = document.createElement('button'); remove.textContent = '解除设备接入';
     remove.onclick = async () => {
       if (!confirm(`解除「${device.name}」的设备接入？线上访问将立即停止，局域网功能继续可用。`)) return;

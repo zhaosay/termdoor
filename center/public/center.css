@@ -28,6 +28,7 @@ button:disabled{opacity:.5;cursor:wait}
 .device p{margin:0;font-size:var(--zh-font-base)}
 .device-actions{display:grid;grid-template-columns:7.5em auto;align-items:center;gap:var(--zh-space-3)}
 .device-open-slot .open{width:100%;text-align:center}
+.device-open-slot{display:grid;gap:var(--zh-space-2)}
 #setup-guide{margin-top:var(--zh-space-10)}
 #setup-guide li{line-height:1.8;margin-bottom:var(--zh-space-3)}
 #setup-guide a:not(.open){color:var(--zh-color-primary)}

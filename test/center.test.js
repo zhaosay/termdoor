@@ -49,10 +49,12 @@ test('center login, binding, private proxy, authorization and revocation', async
   const wss = new WebSocket.Server({ server: mock }); wss.on('connection', (ws) => ws.on('message', (message) => ws.send(message)));
   await new Promise((resolve) => mock.listen(device.port, '127.0.0.1', resolve));
   t.after(() => { wss.close(); mock.close(); });
-  assert.equal((await call('/api/device/heartbeat', 'POST', creds, { Authorization: `Bearer ${device.secret}` })).data.online, true);
+  assert.equal((await call('/api/device/heartbeat', 'POST', { ...creds, apps: [{ id: 'aimini', name: 'aimini' }] }, { Authorization: `Bearer ${device.secret}` })).data.online, true);
   const list = await call('/api/devices');
   assert.equal(list.data.devices[0].online, true); assert.ok(!JSON.stringify(list.data).includes(device.secret)); assert.ok(!JSON.stringify(list.data).includes(creds.token));
   assert.equal(list.data.devices[0].enrollmentId, enrollmentId);
+  assert.equal(list.data.devices[0].apps[0].id, 'aimini');
+  assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`)).status, 200);
   const proxied = await fetch(`http://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: cookie } });
   assert.match(await proxied.text(), new RegExp(`/d/${device.id}/app.js`));
   assert.equal((await call(`/d/${device.id}/api/frp`)).status, 403);
@@ -67,6 +69,8 @@ test('center login, binding, private proxy, authorization and revocation', async
   assert.equal((await plugin('NewProxy', { ...proxy, remote_port: device.port + 1 })).reject, true);
   const other = await call('/api/login', 'POST', { username: 'other', password: otherPassword });
   assert.equal((await call(`/d/${device.id}/api/sessions`, 'GET', null, { Cookie: other.headers.get('set-cookie').split(';')[0] })).status, 404);
+  assert.equal((await call(`/d/${device.id}/apps/aimini/api/state`, 'GET', null, { Cookie: other.headers.get('set-cookie').split(';')[0] })).status, 404);
+  assert.equal((await call(`/d/${device.id}/apps/aimini/api/tasks`, 'POST', {}, { Origin: 'https://evil.test' })).status, 403);
   const ws = new WebSocket(`ws://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: cookie, Origin: 'https://center.test' } });
   await new Promise((resolve, reject) => { ws.once('open', resolve); ws.once('error', reject); });
   const echoed = new Promise((resolve) => ws.once('message', (message) => resolve(message.toString())));

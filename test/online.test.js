@@ -29,6 +29,7 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
       require: (id) => {
         if (id === './config') return { DATA_DIR: data, SECONDARY_KEY_FILE: path.join(data, 'secondary-key.txt') };
         if (id === './auth') return { TOKEN: 'a'.repeat(32), loadName: () => 'new computer' };
+        if (id === './app-proxy') return { listApps: () => [{ id: 'aimini', name: 'aimini' }] };
         if (id === 'child_process') return {
           execFile: (file, args, callback) => callback(null, '0.71.0'),
           spawn: () => {
@@ -64,6 +65,7 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
   if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(data, 'online.json')).mode & 0o777, 0o600);
   assert.equal(requests[0].url, 'https://center.example.com/api/device/register');
   assert.equal(requests[1].headers.Authorization, `Bearer ${'d'.repeat(64)}`);
+  assert.equal(requests[1].body.apps[0].id, 'aimini');
   assert.equal(JSON.stringify(state).includes('d'.repeat(64)), false);
   online.stop();
   const restored = load();

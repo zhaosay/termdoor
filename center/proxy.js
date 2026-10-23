@@ -5,7 +5,7 @@ function targetRequest(req, device, pathname, publicOrigin) {
   const url = new URL(pathname, 'http://localhost');
   url.searchParams.set('token', device.token);
   url.searchParams.set('key', device.key);
-  const headers = { ...req.headers, host: new URL(publicOrigin).host, 'accept-encoding': 'identity' };
+  const headers = { ...req.headers, host: new URL(publicOrigin).host, 'accept-encoding': url.pathname.startsWith('/apps/') ? (req.headers['accept-encoding'] || 'identity') : 'identity' };
   delete headers.cookie;
   delete headers.authorization;
   delete headers['if-none-match'];
@@ -22,8 +22,8 @@ function proxyHttp(req, res, device, pathname, publicOrigin) {
     delete headers['set-cookie'];
     delete headers.etag;
     delete headers['content-length'];
-    delete headers['content-encoding'];
     if ((response.headers['content-type'] || '').includes('text/html')) {
+      delete headers['content-encoding'];
       const chunks = [];
       response.on('data', (chunk) => chunks.push(chunk));
       response.on('end', () => {

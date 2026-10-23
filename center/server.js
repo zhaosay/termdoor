@@ -71,7 +71,7 @@ function terminalRoute(req, user) {
 }
 const permitted = new Set(['/', '/index.html', '/app.js', '/token.js', '/helpers.js', '/upload.js', '/frp.js', '/online.js', '/base.js', '/termdoor.css', '/theme-init.js', '/icon-192.png', '/icon-512.png', '/api/name', '/api/version', '/api/sessions', '/api/connections', '/api/quick-commands', '/api/upload']);
 function allowed(pathname) {
-  return permitted.has(pathname) || /^\/vendor\/[a-zA-Z0-9.-]+$/.test(pathname);
+  return permitted.has(pathname) || /^\/vendor\/[a-zA-Z0-9.-]+$/.test(pathname) || /^\/apps\/[a-z][a-z0-9-]{0,31}\//.test(pathname);
 }
 
 async function handle(req, res) {
@@ -97,6 +97,7 @@ async function handle(req, res) {
     if (!device) return json(res, 401, { error: '设备已解绑' });
     const input = await body(req);
     device.lastSeen = Date.now();
+    device.apps = Array.isArray(input.apps) ? input.apps.slice(0, 10).filter((a) => a && /^[a-z][a-z0-9-]{0,31}$/.test(a.id) && typeof a.name === 'string').map(({ id, name }) => ({ id, name: name.slice(0, 40) })) : [];
     if (/^[a-f0-9]{32}$/.test(input.token || '') && /^[A-Za-z0-9_-]{8,128}$/.test(input.key || '')) {
       device.token = input.token;
       device.key = input.key;
@@ -157,7 +158,7 @@ async function handle(req, res) {
     return json(res, 200, { ok: true });
   }
   if (url.pathname === '/api/devices' && req.method === 'GET') {
-    const devices = await Promise.all(db.devices.filter((d) => d.owner === user.userId).map(async (d) => ({ id: d.id, name: d.name, enrollmentId: d.enrollmentId, lastSeen: d.lastSeen, online: await available(d) })));
+    const devices = await Promise.all(db.devices.filter((d) => d.owner === user.userId).map(async (d) => ({ id: d.id, name: d.name, enrollmentId: d.enrollmentId, lastSeen: d.lastSeen, apps: d.apps || [], online: await available(d) })));
     return json(res, 200, { devices });
   }
   if (url.pathname === '/api/invites' && req.method === 'POST') {
