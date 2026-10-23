@@ -747,8 +747,14 @@
         });
         tabsEl.appendChild(tabEl);
 
+        const openTerminalLink = (event, uri) => {
+          event.preventDefault();
+          if (/^https?:\/\//i.test(uri)) window.open(uri, '_blank', 'noopener,noreferrer');
+        };
         const term = new Terminal({
           cursorBlink: true,
+          lineHeight: 1.15,
+          linkHandler: { activate: openTerminalLink },
           scrollback: 5000,
           fontFamily: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
           theme: {
@@ -760,8 +766,10 @@
         });
         const fitAddon = new FitAddon.FitAddon();
         const searchAddon = new SearchAddon.SearchAddon();
+        const webLinksAddon = new WebLinksAddon.WebLinksAddon(openTerminalLink);
         term.loadAddon(fitAddon);
         term.loadAddon(searchAddon);
+        term.loadAddon(webLinksAddon);
         term.open(pane);
 
         term.attachCustomKeyEventHandler((e) => {
