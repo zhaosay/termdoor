@@ -22,7 +22,24 @@ for (const status of [200, 401, 403, 404]) {
     await element('online-button').onclick();
     assert.equal(element('online-dialog').open, true);
     assert.equal(element('online-bind').disabled, status !== 200);
-    const expected = { 200: /可选功能/, 401: /访问令牌/, 403: /localhost/, 404: /更新并重启/ };
+    const expected = { 200: /设备接入码/, 401: /访问令牌/, 403: /localhost/, 404: /更新并重启/ };
     assert.match(element('online-info').textContent, expected[status]);
   });
 }
+
+test('terminal opens the dedicated page with credentials in session storage, not its URL', () => {
+  const row = {}, opener = {};
+  let transferred, destination;
+  const context = vm.createContext({
+    document: { getElementById: (id) => ({ 'online-row': row, 'online-button': opener }[id] || null) },
+    TERMDoorBase: '', sessionStorage: { setItem: (key, value) => { transferred = { key, value }; } },
+    location: { assign: (url) => { destination = url; } },
+  });
+  vm.runInContext(fs.readFileSync('public/online.js', 'utf8'), context);
+  vm.runInContext('initOnline({authQuery: "token=local-test&key=secondary-test", closeAllDropdowns: () => {}})', context);
+  opener.onclick();
+  assert.equal(destination, '/online.html');
+  assert.equal(transferred.key, 'webcli-enrollment-auth');
+  assert.equal(transferred.value, 'token=local-test&key=secondary-test');
+  assert.equal(row.hidden, false);
+});

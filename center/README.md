@@ -39,9 +39,14 @@ The device database contains terminal credentials and must remain private.
 
 ## Files to deploy
 
-Copy `center/`, `lib/qr.js`, and `public/vendor/zhaoui.css` into the same layout
+Copy `center/`, `lib/qr.js`, `public/online-page.css`, and `public/vendor/zhaoui.css` into the same layout
 under `/opt/termdoor-center`. Install `qrcode-terminal@0.12.0` in that root.
 Node.js 18+ is required. frps 0.71.0 is expected at `/usr/local/bin/frps`.
+
+The public `/setup` page guides users through preparing the local computer,
+generating a device enrollment code, and verifying the terminal connection.
+Use TermDoor 0.13.0+ on the local computer for the matching `/online.html`
+guide. The center address is taken from the current website origin.
 
 `center/deploy/bootstrap.sh` targets a Linux server with systemd and nginx.
 It creates a restricted system user, issues a Let's Encrypt certificate using

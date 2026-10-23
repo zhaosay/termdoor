@@ -9,30 +9,20 @@
   <script src="/center.js" defer></script>
 </head>
 <body>
-  <header><a class="brand" href="/">TermDoor<span>浏览器里的终端之门</span></a><a class="setup-nav" href="#setup-guide">接入电脑</a><div id="account" hidden><span id="username"></span><button id="password-button">修改密码</button><button id="logout">退出</button></div></header>
+  <header><a class="brand" href="/">TermDoor<span>浏览器里的终端之门</span></a><a class="setup-nav" href="/setup">设备接入</a><div id="account" hidden><span id="username"></span><button id="password-button">修改密码</button><button id="logout">退出</button></div></header>
   <main>
     <section id="login" hidden>
       <div class="intro"><p class="eyebrow">随时连接你的电脑</p><h1>设备在远方，<br>终端在眼前。</h1><p>登录后，打开你已接入的在线设备。</p></div>
-      <form id="login-form" class="panel"><h2>登录 TermDoor</h2><label>用户名<input name="username" autocomplete="username" required maxlength="40"></label><label>密码<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button class="primary" type="submit">登录</button></form>
+      <form id="login-form" class="panel"><h2>登录 TermDoor</h2><label>中心账号<input name="username" autocomplete="username" required maxlength="40"></label><label>中心密码<input name="password" type="password" autocomplete="current-password" required maxlength="256"></label><button class="primary" type="submit">登录</button></form>
     </section>
     <section id="dashboard" hidden>
-      <div class="heading"><div><p class="eyebrow">你的工作空间</p><h1>我的设备</h1><p id="summary">正在检查设备状态…</p></div><button id="bind" class="primary">接入新设备</button></div>
+      <div class="heading"><div><p class="eyebrow">你的工作空间</p><h1>我的设备</h1><p id="summary">正在检查设备状态…</p></div><button id="bind" class="primary">设备接入</button></div>
       <div id="devices" aria-live="polite"></div>
-      <div id="empty" class="panel" hidden><h2>接入第一台电脑</h2><p>生成绑定码，在那台电脑的 TermDoor 本地设置中完成绑定。</p></div>
+      <div id="empty" class="panel" hidden><h2>接入第一台电脑</h2><p>前往「设备接入」页面，按步骤生成设备接入码并接入电脑。</p></div>
     </section>
-    <section id="setup-guide" class="panel">
-      <h2>这台电脑如何接入？</h2>
-      <ol>
-        <li>在要接入的电脑上安装或更新 TermDoor 到 0.12.1 或更新版本，并启动服务。</li>
-        <li>登录本中心，点击「接入新设备」生成一次性绑定码。</li>
-        <li>打开下方本机接入网页，验证本机权限，填写本中心地址和绑定码。</li>
-      </ol>
-      <p><a id="local-setup-link" class="open" href="http://localhost:3050/online.html" target="_blank" rel="noopener noreferrer">打开本机接入网页</a> <a href="https://github.com/zhaosay/termdoor#readme" target="_blank" rel="noopener noreferrer">安装与更新说明</a></p>
-      <p>按钮打开的是当前电脑的 localhost:3050。若端口不同，请使用实际主端口的 /online.html；若网页打不开，先启动本机 TermDoor。旧版本请先运行 update.sh（macOS / Linux）或 update.bat（Windows），保存终端工作后重启。线上网页不能代替本机安装终端服务。</p>
-    </section>
+    <section id="setup-guide" class="panel"><h2>接入另一台电脑</h2><p>统一的设备接入向导会解释中心账号、设备接入码和本机权限分别在哪里获取、如何填写。</p><a class="open" href="/setup">打开设备接入向导</a></section>
     <p id="message" role="status" aria-live="polite"></p>
   </main>
-  <dialog id="bind-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>接入一台电脑</h2><p>在要接入的电脑上，打开本机接入网页并填写：</p><label>中心地址<input readonly id="center-url"></label><label>一次性绑定码<input readonly id="bind-code"></label><p>绑定码 10 分钟内有效，只能使用一次。局域网功能仍可独立使用。</p><button id="copy-code" class="primary">复制绑定码</button><p><a id="bind-setup-link" class="open" href="http://localhost:3050/online.html" target="_blank" rel="noopener noreferrer">打开本机接入网页</a></p><p>如果打不开，请先安装或更新并启动本机 TermDoor；自定义端口请改用实际主端口。</p></dialog>
   <dialog id="password-dialog"><form method="dialog"><button class="close" aria-label="关闭">×</button></form><h2>修改密码</h2><form id="password-form"><label>当前密码<input name="current" type="password" autocomplete="current-password" required maxlength="256"></label><label>新密码<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><p>至少 12 个字符。修改后需要重新登录。</p><button class="primary" type="submit">保存密码</button></form><p id="password-message" role="status"></p></dialog>
 </body>
 </html>

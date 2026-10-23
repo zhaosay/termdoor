@@ -1,7 +1,4 @@
 const $ = (id) => document.getElementById(id);
-const localSetup = new URL('http://localhost:3050/online.html');
-localSetup.searchParams.set('center', location.origin);
-for (const id of ['local-setup-link', 'bind-setup-link']) $(id).href = localSetup.href;
 async function api(url, method = 'GET', body) {
   const response = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
   const data = await response.json();
@@ -35,9 +32,9 @@ async function refresh() {
     if (device.online) {
       const open = document.createElement('a'); open.className = 'open'; open.href = `/d/${device.id}/?token=center`; open.textContent = '打开终端'; open.target = '_blank'; open.rel = 'noopener'; openSlot.append(open);
     }
-    const remove = document.createElement('button'); remove.textContent = '解绑';
+    const remove = document.createElement('button'); remove.textContent = '解除设备接入';
     remove.onclick = async () => {
-      if (!confirm(`解绑「${device.name}」？线上访问将立即停止，局域网功能继续可用。`)) return;
+      if (!confirm(`解除「${device.name}」的设备接入？线上访问将立即停止，局域网功能继续可用。`)) return;
       try { await api(`/api/devices/${device.id}`, 'DELETE'); await refresh(); } catch (err) { message(err.message); }
     };
     actions.append(openSlot, remove); row.append(number, info, actions); return row;
@@ -50,13 +47,7 @@ $('login-form').onsubmit = async (event) => {
   catch (err) { message(err.message); } finally { button.disabled = false; }
 };
 $('logout').onclick = async () => { try { await api('/api/logout', 'POST'); showLogin(); } catch (err) { message(err.message); } };
-$('bind').onclick = async () => {
-  try {
-    const { code } = await api('/api/invites', 'POST');
-    $('center-url').value = location.origin; $('bind-code').value = code; $('copy-code').textContent = '复制绑定码'; $('bind-dialog').showModal();
-  } catch (err) { message(err.message); }
-};
-$('copy-code').onclick = async () => { try { await navigator.clipboard.writeText($('bind-code').value); $('copy-code').textContent = '已复制'; } catch { $('bind-code').select(); } };
+$('bind').onclick = () => location.assign('/setup');
 $('password-button').onclick = () => { $('password-form').reset(); $('password-message').textContent = ''; $('password-dialog').showModal(); };
 $('password-form').onsubmit = async (event) => {
   event.preventDefault();

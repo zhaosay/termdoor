@@ -101,7 +101,7 @@
           </div>
           <div id="online-row">
             <div class="settings-divider"></div>
-            <div class="action-row"><button type="button" id="online-button">线上连接</button></div>
+            <div class="action-row"><button type="button" id="online-button">设备接入</button></div>
           </div>
         </div>
       </div>
@@ -168,7 +168,7 @@
           <form id="frp-form" autocomplete="off">
             <label>服务器地址<input id="frp-server-addr" type="text" maxlength="253" autocomplete="off" spellcheck="false" required></label>
             <label>控制端口<input id="frp-server-port" type="text" inputmode="numeric" maxlength="5" autocomplete="off" required></label>
-            <label>令牌<input id="frp-token" type="password" maxlength="128" autocomplete="new-password" spellcheck="false"></label>
+            <label>frp 服务令牌<input id="frp-token" type="password" maxlength="128" autocomplete="new-password" spellcheck="false"></label>
             <label>服务器上的映射端口<input id="frp-remote-port" type="text" inputmode="numeric" maxlength="5" autocomplete="off" required></label>
             <label>代理名<input id="frp-proxy-name" type="text" maxlength="40" autocomplete="off" spellcheck="false"></label>
             <div id="frp-msg"></div>
@@ -205,18 +205,6 @@
     </div>
   </div>
 
-  <dialog id="online-dialog">
-    <form method="dialog"><button type="submit">关闭</button></form>
-    <h3>线上连接</h3>
-    <p id="online-info" role="status"></p>
-    <p><a href="/online.html">打开独立接入网页</a></p>
-    <form id="online-form">
-      <label>中心地址<input id="online-center" type="url" placeholder="https://center.example.com" required></label>
-      <label>一次性绑定码<input id="online-code" autocomplete="off" maxlength="16" required></label>
-      <button id="online-bind" type="submit">绑定并连接</button>
-      <button id="online-disconnect" type="button" hidden>断开线上连接</button>
-    </form>
-  </dialog>
   <script src="/base.js"></script>
   <script src="/vendor/xterm.js"></script>
   <script src="/vendor/addon-fit.js"></script>

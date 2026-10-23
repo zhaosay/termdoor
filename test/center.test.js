@@ -18,6 +18,11 @@ test('center login, binding, private proxy, authorization and revocation', async
   t.after(() => { child.kill(); fs.rmSync(data, { recursive: true, force: true }); });
   await new Promise((resolve, reject) => { child.stdout.once('data', resolve); child.once('exit', (code) => reject(new Error(`Center exited ${code}`))); });
   let cookie = '';
+  for (const asset of ['/setup', '/setup.js', '/setup.css']) {
+    const response = await fetch(`http://127.0.0.1:17701${asset}`);
+    assert.equal(response.status, 200);
+    if (asset === '/setup') assert.match(await response.text(), /设备接入码/);
+  }
   async function call(endpoint, method = 'GET', input, custom = {}) {
     const response = await fetch(`http://127.0.0.1:17701${endpoint}`, { method, headers: { Origin: 'https://center.test', Cookie: cookie, 'Content-Type': 'application/json', ...custom }, body: input ? JSON.stringify(input) : undefined, redirect: 'manual' });
     return { status: response.status, data: await response.json(), headers: response.headers };
@@ -28,7 +33,9 @@ test('center login, binding, private proxy, authorization and revocation', async
   const login = await call('/api/login', 'POST', { username: 'tester', password });
   assert.equal(login.status, 200); assert.match(login.headers.get('set-cookie'), /HttpOnly; Secure; SameSite=Strict/);
   cookie = login.headers.get('set-cookie').split(';')[0];
-  const { code } = (await call('/api/invites', 'POST')).data;
+  const { code, enrollmentId, expiresAt } = (await call('/api/invites', 'POST')).data;
+  assert.match(enrollmentId, /^[a-f0-9]{24}$/);
+  assert.ok(expiresAt > Date.now());
   const creds = { code, name: 'test machine', token: 'a'.repeat(32), key: 'b'.repeat(32) };
   const device = (await call('/api/device/register', 'POST', creds)).data;
   assert.ok(device.secret); assert.equal((await call('/api/device/register', 'POST', creds)).status, 401);
@@ -42,9 +49,10 @@ test('center login, binding, private proxy, authorization and revocation', async
   const wss = new WebSocket.Server({ server: mock }); wss.on('connection', (ws) => ws.on('message', (message) => ws.send(message)));
   await new Promise((resolve) => mock.listen(device.port, '127.0.0.1', resolve));
   t.after(() => { wss.close(); mock.close(); });
-  await call('/api/device/heartbeat', 'POST', creds, { Authorization: `Bearer ${device.secret}` });
+  assert.equal((await call('/api/device/heartbeat', 'POST', creds, { Authorization: `Bearer ${device.secret}` })).data.online, true);
   const list = await call('/api/devices');
   assert.equal(list.data.devices[0].online, true); assert.ok(!JSON.stringify(list.data).includes(device.secret)); assert.ok(!JSON.stringify(list.data).includes(creds.token));
+  assert.equal(list.data.devices[0].enrollmentId, enrollmentId);
   const proxied = await fetch(`http://127.0.0.1:17701/d/${device.id}/?token=center`, { headers: { Cookie: cookie } });
   assert.match(await proxied.text(), new RegExp(`/d/${device.id}/app.js`));
   assert.equal((await call(`/d/${device.id}/api/frp`)).status, 403);

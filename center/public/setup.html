@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN" data-mode="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer">
+  <title>设备接入 · 线上中心 · TermDoor</title>
+  <link rel="stylesheet" href="/vendor/zhaoui.css"><link rel="stylesheet" href="/setup.css"><script src="/setup.js" defer></script>
+</head>
+<body>
+  <header class="setup-header"><a href="/">TermDoor</a><span>线上中心 · 设备接入</span><a href="/">我的设备</a></header>
+  <main>
+    <div class="page-intro"><p class="overline">让你的电脑随时可达</p><h1>设备接入</h1><p>在要接入的电脑上完成这三个步骤。中心负责生成设备接入码，本机负责验证权限和建立连接。</p></div>
+    <ol class="step-nav" aria-label="接入步骤"><li id="nav-prepare" aria-current="step"><span>1</span>准备本机</li><li id="nav-code"><span>2</span>获取并填写设备接入码</li><li id="nav-result"><span>3</span>确认接入结果</li></ol>
+    <div class="setup-layout"><div>
+      <section aria-labelledby="prepare-title">
+        <div class="section-heading"><span class="step-number">1</span><h2 id="prepare-title">准备本机</h2></div>
+        <p>先在要接入的电脑上安装并启动 TermDoor。新版接入向导需要 0.13.0 或更新版本；本机网页会自动检查版本和权限。</p>
+        <details><summary>尚未安装，或如何更新？</summary><p>按项目的安装说明安装 TermDoor。已有安装可在项目目录运行 <code>./update.sh</code>（macOS / Linux）或 <code>update.bat</code>（Windows）。更新会重启服务，请先保存终端工作。</p><p><a href="https://github.com/zhaosay/termdoor#readme" target="_blank" rel="noopener noreferrer">打开安装与更新说明 ↗</a></p></details>
+        <label for="local-address">本机 TermDoor 地址</label><input id="local-address" type="url" value="http://localhost:3050" aria-describedby="local-address-help">
+        <p id="local-address-help" class="field-help">通常不用修改。若本机改过主端口或启用了 HTTPS，请填写实际地址；仅支持 localhost、127.0.0.1 或 [::1]。按钮打开的是当前电脑。</p>
+        <a id="open-local" class="button" target="_blank" rel="noopener noreferrer" href="http://localhost:3050/online.html">打开本机设备接入页 ↗</a>
+        <p id="local-address-error" role="status" class="field-help"></p>
+      </section>
+      <section aria-labelledby="code-title">
+        <div class="section-heading"><span class="step-number">2</span><h2 id="code-title">获取并填写设备接入码</h2></div>
+        <p>中心地址会自动带入本机页面。你只需要在本中心生成设备接入码，再复制到本机的同名字段。</p>
+        <label for="setup-center">中心地址 <span class="muted">已自动获取</span></label><input id="setup-center" readonly>
+        <p class="field-help">就是当前网站的地址，不使用作者的默认中心，也无需修改源码。</p>
+        <div id="setup-login">
+          <p class="notice">生成接入码前，请先登录中心账号。本机访问令牌和本机二次密钥不在这里填写。</p>
+          <form id="setup-login-form"><label for="setup-username">中心账号</label><input id="setup-username" name="username" autocomplete="username" maxlength="40" required><label for="setup-password">中心密码</label><input id="setup-password" name="password" type="password" autocomplete="current-password" maxlength="256" required><p class="field-help">账号由这个中心的管理员创建；它与本机 TermDoor 的验证信息不同。</p><button type="submit">登录中心</button></form>
+        </div>
+        <div id="setup-account" hidden><p id="setup-account-name"></p><button id="generate-code" type="button">生成设备接入码</button></div>
+        <div id="code-panel" hidden>
+          <label for="setup-code">设备接入码</label><input id="setup-code" class="code-display" readonly autocomplete="off">
+          <p id="code-countdown" class="field-help" role="status"></p><button id="copy-setup-code" class="secondary" type="button">复制设备接入码</button>
+          <p class="field-help">粘贴到本机设备接入页的「设备接入码」字段，再点「接入这台电脑」。接入码 10 分钟有效、只能使用一次，请勿公开分享。</p>
+        </div>
+        <p id="setup-message" role="status" aria-live="polite"></p>
+      </section>
+      <section aria-labelledby="result-title">
+        <div class="section-heading"><span class="step-number">3</span><h2 id="result-title">确认接入结果</h2><span id="setup-result-status" class="status-label">等待接入</span></div>
+        <p id="setup-result" role="status" aria-live="polite">登录中心后，此处会自动检查你的设备。无需反复刷新或重新生成接入码。</p>
+        <ol id="setup-devices" aria-label="已登记设备"></ol>
+        <p class="field-help">新设备只有在中心验证终端通路通过后才显示「接入成功」。已有设备离线时，可在那台电脑的本机接入页查看详细连接状态。</p>
+      </section>
+    </div><aside>
+      <h2>这些名称分别是什么？</h2>
+      <dl class="glossary"><div><dt>中心账号 / 中心密码</dt><dd>登录当前中心网站，由该中心管理员提供。</dd></div><div><dt>设备接入码</dt><dd>在本页生成，填写到要接入的电脑上。10 分钟有效、使用一次。</dd></div><div><dt>本机访问令牌</dt><dd>用于本机权限验证，仅在本机页面填写。已登录时自动复用。</dd></div><div><dt>本机二次密钥</dt><dd>本机启用二次验证时需要。来源和查找方法在本机页面中说明。</dd></div></dl>
+      <details><summary>我在手机或另一台电脑上？</summary><p>你可以在这里生成设备接入码，但「打开本机」按钮只会打开当前浏览器所在电脑。请在真正要接入的电脑上打开它自己的设备接入页。</p></details>
+      <details><summary>自建中心或更换域名？</summary><p>部署者需要配置自己的域名、HTTPS 和服务地址。每台电脑在本机设备接入页选择中心；更换中心前先断开旧接入。</p><p><a href="https://github.com/zhaosay/termdoor/blob/main/center/SELF_HOSTING.zh-CN.md" target="_blank" rel="noopener noreferrer">查看自建教程 ↗</a></p></details>
+    </aside></div>
+  </main>
+</body>
+</html>

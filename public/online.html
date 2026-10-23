@@ -1,43 +1,56 @@
 <!doctype html>
 <html lang="zh-CN" data-mode="dark">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <title>TermDoor · 线上接入</title>
-  <link rel="stylesheet" href="/vendor/zhaoui.css">
-  <link rel="stylesheet" href="/online-page.css">
-  <script src="/theme-init.js"></script>
-  <script src="/base.js" defer></script>
-  <script src="/token.js" defer></script>
-  <script src="/online.js" defer></script>
-  <script src="/online-page.js" defer></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer">
+  <title>设备接入 · 本机 · TermDoor</title>
+  <link rel="stylesheet" href="/vendor/zhaoui.css"><link rel="stylesheet" href="/online-page.css">
+  <script src="/theme-init.js"></script><script src="/base.js" defer></script><script src="/token.js" defer></script><script src="/online.js" defer></script><script src="/online-page.js" defer></script>
 </head>
 <body>
-  <main>
-    <a href="/">← 返回本机终端</a>
-    <h1>把这台电脑接入线上</h1>
-    <p>在目标电脑上打开本页。填写你使用的中心地址和一次性绑定码，接入后即可从中心网站打开这台电脑的终端。</p>
-    <section aria-labelledby="auth-title">
-      <h2 id="auth-title">1. 验证本机权限</h2>
-      <p>这里使用本机 TermDoor 的访问令牌，与线上中心账号密码不同。已在此浏览器登录过时会自动填入。</p>
-      <form id="online-auth-form">
-        <label>本机访问令牌<input id="online-token" type="password" autocomplete="off" required></label>
-        <label>本机二次密钥（启用时必填）<input id="online-key" type="password" autocomplete="off"></label>
-        <button type="submit">验证 / 刷新状态</button>
-      </form>
-    </section>
-    <section aria-labelledby="bind-title">
-      <h2 id="bind-title">2. 设置线上中心</h2>
-      <p>先登录你使用的中心网站，点击「接入新设备」获取 10 分钟有效、只能使用一次的绑定码。</p>
-      <p id="online-info" role="status" aria-live="polite">正在读取接入状态…</p>
-      <form id="online-form">
-        <label>中心地址<input id="online-center" type="url" placeholder="https://center.example.com" required disabled></label>
-        <label>一次性绑定码<input id="online-code" autocomplete="off" maxlength="16" required disabled></label>
-        <div class="actions"><button id="online-bind" type="submit" disabled>绑定并连接</button><button id="online-disconnect" type="button" hidden>断开线上连接</button></div>
-      </form>
-    </section>
-    <p>接入失败时，本页会显示具体错误。端口默认为 3050，若已修改端口，请用实际主端口访问；不要从远程端口或中心代理页面执行绑定。</p>
+  <header class="setup-header"><a href="/">TermDoor</a><span>本机 · 设备接入</span><a href="/">返回终端</a></header>
+  <main id="enrollment-page">
+    <div class="page-intro"><p class="overline">从这台电脑开始</p><h1>设备接入</h1><p>连接自己的线上中心，随时打开这台电脑的终端。接入完成后，本机和局域网功能继续可用。</p></div>
+    <ol class="step-nav" aria-label="接入步骤"><li id="nav-prepare" aria-current="step"><span>1</span>准备本机</li><li id="nav-code"><span>2</span>获取并填写设备接入码</li><li id="nav-result"><span>3</span>确认接入结果</li></ol>
+    <div class="setup-layout"><div>
+      <section aria-labelledby="auth-title">
+        <div class="section-heading"><span class="step-number">1</span><h2 id="auth-title">准备本机</h2><span id="auth-status" class="status-label">正在检查</span></div>
+        <p id="machine-info">正在检查本机服务版本与权限…</p>
+        <details id="auth-details"><summary>手动验证本机权限 / 去哪里找？</summary>
+          <p>本机验证用于确认你有权管理这台电脑，不使用中心账号或中心密码。已登录的终端会自动带入验证信息。</p>
+          <form id="online-auth-form">
+            <label for="online-token">本机访问令牌</label><input id="online-token" type="password" autocomplete="off" required aria-describedby="token-help">
+            <p id="token-help" class="field-help">来自本机 TermDoor 访问链接中 token= 后的内容。在项目目录运行 <code>./token.sh status</code>（macOS / Linux）或 <code>token.bat status</code>（Windows）也可查看。</p>
+            <label for="online-key">本机二次密钥 <span class="muted">仅启用二次验证时填写</span></label><input id="online-key" type="password" autocomplete="off" aria-describedby="key-help">
+            <p id="key-help" class="field-help">在项目目录运行 <code>./auth.sh status</code> 或 <code>auth.bat status</code> 查看。无需为了接入重新生成密钥。</p>
+            <button type="submit">验证本机权限</button>
+          </form>
+        </details>
+      </section>
+      <section aria-labelledby="bind-title">
+        <div class="section-heading"><span class="step-number">2</span><h2 id="bind-title">获取并填写设备接入码</h2></div>
+        <p id="configured-note" hidden>这台电脑已经登记到中心，无需再次填写接入码。更换中心时请先断开当前接入。</p>
+        <form id="online-form">
+          <label for="online-center">中心地址</label><input id="online-center" type="url" placeholder="https://center.example.com" required disabled aria-describedby="center-help">
+          <p id="center-help" class="field-help">填写你使用的线上中心地址。从中心的「设备接入」页面打开本页时会自动带入，也可以手动填写。</p>
+          <p><a id="get-code-link" hidden target="_blank" rel="noopener noreferrer">去中心生成设备接入码 ↗</a></p>
+          <label for="online-code">设备接入码</label><input id="online-code" autocomplete="off" maxlength="16" pattern="[a-fA-F0-9]{16}" spellcheck="false" required disabled aria-describedby="code-help">
+          <p id="code-help" class="field-help">登录线上中心 → 设备接入 → 生成设备接入码。复制 16 位接入码到这里，10 分钟内有效、只能使用一次。它不是本机访问令牌，也不是中心密码。</p>
+          <button id="online-bind" type="submit" disabled>接入这台电脑</button>
+        </form>
+      </section>
+      <section aria-labelledby="result-title">
+        <div class="section-heading"><span class="step-number">3</span><h2 id="result-title">确认接入结果</h2><span id="result-status" class="status-label">等待接入</span></div>
+        <p id="online-info" role="status" aria-live="polite">正在读取接入状态…</p>
+        <ol class="connection-stages" aria-label="连接进度"><li id="phase-preparing">准备连接组件</li><li id="phase-registering">登记设备</li><li id="phase-connecting">建立加密连接</li><li id="phase-verifying">验证终端通路</li></ol>
+        <dl id="connection-details" hidden><div><dt>设备名称</dt><dd id="device-name"></dd></div><div><dt>中心地址</dt><dd id="saved-center"></dd></div><div><dt>最近成功通信</dt><dd id="last-heartbeat"></dd></div></dl>
+        <div class="actions"><button id="refresh-status" type="button" class="secondary">重新检查</button><a id="center-dashboard" class="button" hidden target="_blank" rel="noopener noreferrer">到中心查看设备</a><button id="online-disconnect" class="secondary" type="button" hidden>断开设备接入</button></div>
+        <p class="field-help">只有中心确认终端通路可用，才会显示「接入成功」。登记成功但仍在连接时，无需重新生成接入码。断开后，中心旧设备记录需在中心网站中解除。</p>
+      </section>
+    </div><aside>
+      <h2>这些名称分别是什么？</h2>
+      <dl class="glossary"><div><dt>中心账号 / 中心密码</dt><dd>只用于登录线上中心，由中心管理员提供。</dd></div><div><dt>设备接入码</dt><dd>在线上中心生成，用来把这台电脑加入你的账号。</dd></div><div><dt>本机访问令牌</dt><dd>验证本机 TermDoor 权限，通常自动带入。</dd></div><div><dt>本机二次密钥</dt><dd>启用二次验证时使用，通常复用已验证的登录。</dd></div></dl>
+      <details><summary>网页打不开或一直连接失败？</summary><p>在要接入的电脑自己的浏览器打开 localhost 主端口，本页要求 TermDoor 0.13.0 或更新版本。旧版本先运行 update.sh / update.bat 并重启，重启前保存终端工作。</p><p>frpc 连接组件会自动寻找或下载；下载失败时可安装 frp 0.71.0，并通过 WEBCLI_FRPC_PATH 指定可执行文件。</p></details>
+    </aside></div>
   </main>
 </body>
 </html>

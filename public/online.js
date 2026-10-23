@@ -1,4 +1,4 @@
-function initOnline({ authQuery, closeAllDropdowns }) {
+function initOnline({ authQuery, closeAllDropdowns, onState = () => {}, onError = () => {} }) {
   const row = document.getElementById('online-row');
   const dialog = document.getElementById('online-dialog');
   const info = document.getElementById('online-info');
@@ -6,6 +6,19 @@ function initOnline({ authQuery, closeAllDropdowns }) {
   const code = document.getElementById('online-code');
   const button = document.getElementById('online-bind');
   const disconnect = document.getElementById('online-disconnect');
+  const form = document.getElementById('online-form');
+  const opener = document.getElementById('online-button');
+  if (row) row.hidden = false;
+  if (!form) {
+    if (opener) opener.onclick = () => {
+      closeAllDropdowns();
+      if (TERMDoorBase) { alert('请在要接入的电脑上打开 localhost 主端口的 /online.html 设备接入页面。'); return; }
+      try { sessionStorage.setItem('webcli-enrollment-auth', typeof authQuery === 'function' ? authQuery() : authQuery); } catch {}
+      location.assign('/online.html');
+    };
+    return {};
+  }
+  let busy = false;
   async function call(method = 'GET', body) {
     const endpoint = `/api/online?${typeof authQuery === 'function' ? authQuery() : authQuery}`;
     const response = await terminalFetch(endpoint, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined });
@@ -19,9 +32,11 @@ function initOnline({ authQuery, closeAllDropdowns }) {
   }
   function fill(state) {
     if (state.center) center.value = state.center;
-    center.disabled = state.configured; code.disabled = state.configured; button.disabled = state.configured;
+    form.hidden = !!state.configured;
+    center.disabled = state.configured || busy; code.disabled = state.configured || busy; button.disabled = state.configured || busy;
     disconnect.hidden = !state.configured;
-    info.textContent = state.error || (state.configured ? state.running && state.lastHeartbeat ? '已接入线上中心。请在中心设备列表确认终端通路。' : '已绑定，正在连接…' : '可选功能。绑定后可从线上访问，原有局域网功能继续可用。');
+    info.textContent = state.error || (state.ready ? '接入成功：中心已验证终端通路。' : state.configured ? '设备已登记，正在等待中心验证终端通路。' : '本机权限已验证。请填写中心地址和设备接入码。');
+    onState(state);
   }
   function showError(err) {
     center.disabled = true; code.disabled = true; button.disabled = true; disconnect.hidden = true;
@@ -29,23 +44,25 @@ function initOnline({ authQuery, closeAllDropdowns }) {
     else if (err.status === 401) info.textContent = '请先填写本机 TermDoor 的访问令牌和二次密钥（若已启用），再点击验证。';
     else if (err.status === 404) info.textContent = '当前服务缺少线上接入接口，请更新并重启 TermDoor，然后刷新本页。';
     else info.textContent = `无法读取线上接入状态：${err.message}。请检查本机服务后重试。`;
+    onError(err);
   }
   async function refresh() {
     closeAllDropdowns();
     if (dialog && !dialog.open) dialog.showModal();
     try { fill(await call()); return true; } catch (err) { showError(err); return false; }
   }
-  if (row) row.hidden = false;
-  const opener = document.getElementById('online-button');
   if (opener) opener.onclick = refresh;
   call().then(fill).catch(showError);
-  document.getElementById('online-form').onsubmit = async (event) => {
-    event.preventDefault(); button.disabled = true; info.textContent = '正在准备客户端并绑定设备…';
-    try { fill(await call('POST', { center: center.value.trim(), code: code.value.trim() })); code.value = ''; }
-    catch (err) { info.textContent = err.message; button.disabled = false; }
+  form.onsubmit = async (event) => {
+    event.preventDefault(); if (busy) return;
+    const input = { center: center.value.trim(), code: code.value.trim() };
+    busy = true; button.disabled = true; center.disabled = true; code.disabled = true; info.textContent = '正在准备连接组件并登记设备，请稍候…';
+    try { const state = await call('POST', input); busy = false; fill(state); code.value = ''; }
+    catch (err) { info.textContent = err.message; button.disabled = false; if (err.status === 401 || err.status === 403) onError(err); }
+    finally { busy = false; if (!form.hidden) { button.disabled = false; center.disabled = false; code.disabled = false; } }
   };
   disconnect.onclick = async () => {
-    if (!confirm('断开线上连接？局域网功能继续可用，中心设备记录可在网站中解绑。')) return;
+    if (!confirm('断开设备接入？局域网功能继续可用，中心的设备记录需在中心网站中解除。')) return;
     try { fill(await call('DELETE')); } catch (err) { info.textContent = err.message; }
   };
   return { refresh };

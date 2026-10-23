@@ -74,14 +74,14 @@ async function handle(req, res) {
   if (url.pathname === '/api/device/register' && req.method === 'POST') {
     const input = await body(req);
     const invite = db.invites.find((i) => i.hash === digest(input.code) && i.expires > Date.now());
-    if (!invite) return json(res, 401, { error: '绑定码无效或已过期' });
+    if (!invite) return json(res, 401, { error: '设备接入码无效、已使用或已过期，请在「设备接入」页面重新生成' });
     if (db.devices.filter((d) => d.owner === invite.owner).length >= 100) return json(res, 409, { error: '设备数量已达上限' });
     if (!/^[a-f0-9]{32}$/.test(input.token || '') || !/^[A-Za-z0-9_-]{8,128}$/.test(input.key || '')) return json(res, 400, { error: '设备凭证无效' });
     let port = 16000;
     while (db.devices.some((d) => d.port === port)) port++;
     if (port > 16999) return json(res, 409, { error: '无可用端口' });
     const secret = random();
-    const device = { id: random().slice(0, 24), owner: invite.owner, name: String(input.name || 'TermDoor').slice(0, 40), port, token: input.token, key: input.key, secretHash: digest(secret), lastSeen: 0 };
+    const device = { id: random().slice(0, 24), owner: invite.owner, enrollmentId: invite.id, name: String(input.name || 'TermDoor').slice(0, 40), port, token: input.token, key: input.key, secretHash: digest(secret), lastSeen: 0 };
     db.devices.push(device);
     db.invites = db.invites.filter((i) => i !== invite && i.expires > Date.now());
     save();
@@ -98,7 +98,7 @@ async function handle(req, res) {
       device.name = String(input.name || device.name).slice(0, 40);
     }
     save();
-    return json(res, 200, { ok: true });
+    return json(res, 200, { ok: true, online: await available(device) });
   }
   if (url.pathname === '/api/login' && req.method === 'POST') {
     if (!sameOrigin(req)) return json(res, 403, { error: '请求来源无效' });
@@ -119,9 +119,9 @@ async function handle(req, res) {
     sessions.set(digest(token), { userId: user.id, username: user.username, expires: now + TTL });
     return json(res, 200, { username: user.username }, { 'Set-Cookie': `td_session=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${TTL / 1000}` });
   }
-  if (['/', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
-    const filename = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
-    const target = filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : path.join(__dirname, 'public', filename);
+  if (['/', '/setup', '/setup.html', '/setup.js', '/setup.css', '/center.js', '/center.css', '/vendor/zhaoui.css'].includes(url.pathname) && req.method === 'GET') {
+    const filename = url.pathname === '/' ? 'index.html' : ['/setup', '/setup.html'].includes(url.pathname) ? 'setup.html' : url.pathname.slice(1);
+    const target = filename === 'vendor/zhaoui.css' ? path.join(__dirname, '../public/vendor/zhaoui.css') : filename === 'setup.css' ? path.join(__dirname, '../public/online-page.css') : path.join(__dirname, 'public', filename);
     const type = filename.endsWith('.html') ? 'text/html' : filename.endsWith('.css') ? 'text/css' : 'application/javascript';
     res.writeHead(200, { ...headers, 'Content-Type': `${type}; charset=utf-8` });
     return res.end(fs.readFileSync(target));
@@ -152,15 +152,17 @@ async function handle(req, res) {
     return json(res, 200, { ok: true });
   }
   if (url.pathname === '/api/devices' && req.method === 'GET') {
-    const devices = await Promise.all(db.devices.filter((d) => d.owner === user.userId).map(async (d) => ({ id: d.id, name: d.name, lastSeen: d.lastSeen, online: await available(d) })));
+    const devices = await Promise.all(db.devices.filter((d) => d.owner === user.userId).map(async (d) => ({ id: d.id, name: d.name, enrollmentId: d.enrollmentId, lastSeen: d.lastSeen, online: await available(d) })));
     return json(res, 200, { devices });
   }
   if (url.pathname === '/api/invites' && req.method === 'POST') {
     db.invites = db.invites.filter((i) => i.expires > Date.now());
-    if (db.invites.filter((i) => i.owner === user.userId).length >= 10) return json(res, 429, { error: '有效绑定码过多，请稍后重试' });
+    if (db.invites.filter((i) => i.owner === user.userId).length >= 10) return json(res, 429, { error: '有效设备接入码过多，请使用已有接入码或等待过期后再生成' });
     const code = random().slice(0, 16);
-    db.invites.push({ hash: digest(code), owner: user.userId, expires: Date.now() + 600000 });
-    save(); return json(res, 201, { code, expiresIn: 600 });
+    const id = random().slice(0, 24);
+    const expires = Date.now() + 600000;
+    db.invites.push({ id, hash: digest(code), owner: user.userId, expires });
+    save(); return json(res, 201, { code, enrollmentId: id, expiresIn: 600, expiresAt: expires });
   }
   const removal = /^\/api\/devices\/([a-f0-9]{24})$/.exec(url.pathname);
   if (removal && req.method === 'DELETE') {

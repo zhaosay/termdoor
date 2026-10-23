@@ -13,16 +13,18 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
   const source = fs.readFileSync(path.resolve('lib/online.js'), 'utf8');
   const requests = [];
   const processes = [];
+  const heartbeats = [];
+  let tunnelOnline = false;
   function load() {
     const module = { exports: {} };
     const context = vm.createContext({
       module, process, Buffer, URL, AbortSignal, console,
-      setTimeout, clearTimeout, setInterval, clearInterval,
+      setTimeout, clearTimeout, setInterval: (callback, ms) => { heartbeats.push(callback); return setInterval(callback, ms); }, clearInterval,
       fetch: async (url, options) => {
         requests.push({ url, body: JSON.parse(options.body), headers: options.headers });
         return { ok: true, json: async () => url.endsWith('/register')
           ? { id: 'c'.repeat(24), secret: 'd'.repeat(64), port: 16000, serverAddr: 'center.example.com', serverPort: 443 }
-          : { ok: true } };
+          : { ok: true, online: tunnelOnline } };
       },
       require: (id) => {
         if (id === './config') return { DATA_DIR: data, SECONDARY_KEY_FILE: path.join(data, 'secondary-key.txt') };
@@ -49,6 +51,12 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
   assert.equal(state.configured, true);
   assert.equal(state.running, true);
   assert.ok(state.lastHeartbeat > 0);
+  assert.equal(state.ready, false, 'a running process and heartbeat do not prove terminal reachability');
+  assert.equal(state.phase, 'verifying');
+  tunnelOnline = true;
+  await heartbeats.at(-1)();
+  assert.equal(online.status().ready, true);
+  assert.equal(online.status().phase, 'online');
   const config = fs.readFileSync(path.join(data, 'online-frpc.toml'), 'utf8');
   assert.match(config, /\n\[\[proxies\]\]\n/);
   assert.match(config, /\nlocalPort = 19001\nremotePort = 16000\n/);
@@ -64,6 +72,7 @@ test('a fresh device binds, writes usable tunnel files and restores after restar
   assert.ok(restored.status().lastHeartbeat > 0);
   assert.match(fs.readFileSync(path.join(data, 'online-frpc.toml'), 'utf8'), /\nlocalPort = 19002\n/);
   restored.disconnect();
+  assert.equal(restored.status().ready, false);
   assert.equal(restored.status().configured, false);
   assert.ok(processes.every((child) => child.killed));
   assert.equal(fs.existsSync(path.join(data, 'online.json')), false);
