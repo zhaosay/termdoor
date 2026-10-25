@@ -60,3 +60,44 @@ aside h2 { font-size: var(--zh-font-base); }
 @media (max-width: 760px) { main { padding: var(--zh-space-6) var(--zh-space-4); } .setup-layout { grid-template-columns: 1fr; gap: var(--zh-space-6); } .setup-header { gap: var(--zh-space-3); padding: var(--zh-space-4); font-size: var(--zh-font-base); } .step-nav { grid-template-columns: 1fr; gap: var(--zh-space-3); } .section-heading h2 { font-size: var(--zh-font-base); } .connection-stages { grid-template-columns: 1fr; } aside { padding: var(--zh-space-5); } }
 
 #online-info, #setup-message, #local-address-error { white-space: pre-line; overflow-wrap: anywhere; }
+
+/* A shared continuous flow for local and center enrollment. */
+.enrollment-page main { max-width: 880px; padding-block: var(--zh-space-8) var(--zh-space-10); }
+.enrollment-page .setup-header { padding-inline: max(var(--zh-space-6), calc((100vw - 832px) / 2)); }
+.enrollment-page .setup-header a:first-child { font-size: 1.25rem; font-weight: 800; }
+.enrollment-page .page-intro { margin-bottom: var(--zh-space-8); }
+.enrollment-page h1 { font-size: clamp(1.75rem, 4vw, 2.25rem); margin: 0 0 var(--zh-space-2); font-weight: 750; }
+.enrollment-page .page-intro p { margin: 0; }
+.enrollment-page .setup-layout { display: block; }
+.enrollment-page .setup-flow > section { position: relative; border: 0; padding: 0 0 var(--zh-space-8) var(--zh-space-12); }
+.enrollment-page .setup-flow > section:not(:last-child)::before { content: ''; position: absolute; left: .85em; top: 2em; bottom: var(--zh-space-2); border-left: 1px solid var(--zh-border); }
+.enrollment-page .setup-flow > section:last-child { padding-bottom: var(--zh-space-4); }
+.enrollment-page .step-number { position: absolute; left: 0; top: 0; background: var(--zh-bg-elevated); font-weight: 700; }
+.enrollment-page .section-heading { min-height: 1.8em; gap: var(--zh-space-3); }
+.enrollment-page .section-heading h2 { font-size: 1.125rem; font-weight: 700; }
+.enrollment-page section p { margin-block: var(--zh-space-2) var(--zh-space-3); }
+.enrollment-page label { margin-top: var(--zh-space-3); }
+.enrollment-page .field-help { font-size: .875rem; line-height: 1.6; }
+.enrollment-page p:empty { display: none; }
+.enrollment-page details { margin-top: var(--zh-space-3); }
+.enrollment-page button, .enrollment-page .button { min-height: 44px; }
+.enrollment-page #setup-account { display: flex; align-items: center; flex-wrap: wrap; gap: var(--zh-space-4); margin-top: var(--zh-space-3); }
+.enrollment-page #setup-account p { margin: 0; }
+.enrollment-page .login-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--zh-space-4); }
+.enrollment-page .setup-help { margin-left: var(--zh-space-12); padding: var(--zh-space-4) 0 0; background: transparent; border-radius: 0; border-top: 1px solid var(--zh-border); }
+.enrollment-page .setup-help > details { margin: 0; }
+.enrollment-page .setup-help > details > summary { color: var(--zh-text); font-weight: 600; padding-block: var(--zh-space-2); }
+.enrollment-page .help-content { padding-top: var(--zh-space-2); }
+.enrollment-page .setup-device { grid-template-columns: 2ch minmax(0, 1fr) 7em 7em; align-items: center; padding-block: var(--zh-space-2); margin: 0; border-bottom: 1px solid var(--zh-border); }
+.enrollment-page #setup-devices a { margin: 0; display: inline-flex; align-items: center; min-height: 44px; }
+@media (max-width: 600px) {
+  .enrollment-page main { padding: var(--zh-space-6) var(--zh-space-4); }
+  .enrollment-page .setup-header { gap: var(--zh-space-3); flex-wrap: wrap; padding: var(--zh-space-4); }
+  .enrollment-page .setup-header span { font-size: .75rem; }
+  .enrollment-page .setup-flow > section { padding-left: var(--zh-space-10); }
+  .enrollment-page .setup-help { margin-left: var(--zh-space-10); }
+  .enrollment-page .login-fields { grid-template-columns: 1fr; gap: 0; }
+  .enrollment-page .setup-device { grid-template-columns: 2ch minmax(0, 1fr) auto; gap: var(--zh-space-2); }
+  .enrollment-page .setup-device > span:last-child { grid-column: 2 / -1; }
+  .enrollment-page #connection-details > div { grid-template-columns: 1fr; gap: var(--zh-space-1); }
+}
